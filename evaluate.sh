@@ -1,0 +1,7 @@
+nohup python3 tools/test.py \
+    models/retinanet_regnetx-1.6GF_fpn_1x_coco.py \
+    models/retinanet_regnetx-1.6GF_fpn_1x_coco_20200517_191403-37009a9d.pth > retina1.6.out &
+
+nohup python3 tools/test.py \
+    models/retinanet_regnetx-3.2GF_fpn_1x_coco.py \
+    models/retinanet_regnetx-3.2GF_fpn_1x_coco_20200520_163141-cb1509e8.pth > retina3.2.out &

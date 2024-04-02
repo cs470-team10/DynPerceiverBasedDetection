@@ -143,9 +143,9 @@ test_cfg = dict(type='TestLoop')
 test_dataloader = dict(
     batch_size=1,
     dataset=dict(
-        ann_file='annotations/instances_val2017.json',
+        ann_file='annotations/instances_val2014.json',
         backend_args=None,
-        data_prefix=dict(img='val2017/'),
+        data_prefix=dict(img='val2014/'),
         data_root='data/coco/',
         pipeline=[
             dict(backend_args=None, type='LoadImageFromFile'),
@@ -171,7 +171,7 @@ test_dataloader = dict(
     persistent_workers=True,
     sampler=dict(shuffle=False, type='DefaultSampler'))
 test_evaluator = dict(
-    ann_file='data/coco/annotations/instances_val2017.json',
+    ann_file='data/coco/annotations/instances_val2014.json',
     backend_args=None,
     format_only=False,
     metric='bbox',
@@ -198,9 +198,9 @@ train_dataloader = dict(
     batch_sampler=dict(type='AspectRatioBatchSampler'),
     batch_size=2,
     dataset=dict(
-        ann_file='annotations/instances_train2017.json',
+        ann_file='annotations/instances_train2014.json',
         backend_args=None,
-        data_prefix=dict(img='train2017/'),
+        data_prefix=dict(img='train2014/'),
         data_root='data/coco/',
         filter_cfg=dict(filter_empty_gt=True, min_size=32),
         pipeline=[
@@ -231,9 +231,9 @@ val_cfg = dict(type='ValLoop')
 val_dataloader = dict(
     batch_size=1,
     dataset=dict(
-        ann_file='annotations/instances_val2017.json',
+        ann_file='annotations/instances_val2014.json',
         backend_args=None,
-        data_prefix=dict(img='val2017/'),
+        data_prefix=dict(img='val2014/'),
         data_root='data/coco/',
         pipeline=[
             dict(backend_args=None, type='LoadImageFromFile'),
@@ -259,7 +259,7 @@ val_dataloader = dict(
     persistent_workers=True,
     sampler=dict(shuffle=False, type='DefaultSampler'))
 val_evaluator = dict(
-    ann_file='data/coco/annotations/instances_val2017.json',
+    ann_file='data/coco/annotations/instances_val2014.json',
     backend_args=None,
     format_only=False,
     metric='bbox',
