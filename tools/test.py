@@ -4,6 +4,7 @@ import os
 import os.path as osp
 import warnings
 from copy import deepcopy
+from datetime import timedelta, datetime
 
 from mmengine import ConfigDict
 from mmengine.config import Config, DictAction
@@ -64,6 +65,8 @@ def parse_args():
 
 
 def main():
+    start_time = datetime.now() + timedelta(hours=9)
+    print("[CS470] Start Time: " + format(start_time, '%Y.%m.%d %H:%M:%S') + " (KST)")
     args = parse_args()
 
     # Reduce the number of repeated compilations and improve
@@ -143,6 +146,10 @@ def main():
 
     # start testing
     runner.test()
+
+    end_time = datetime.now() + timedelta(hours=9)
+    print("[CS470] End Time: " + format(end_time, '%Y.%m.%d %H:%M:%S') + " (KST)")
+    print("[CS470] Takes " + str(timedelta(seconds=(end_time - start_time).seconds)))
 
 
 if __name__ == '__main__':

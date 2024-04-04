@@ -9,6 +9,8 @@ from mmengine.runner import Runner
 
 from mmdet.utils import setup_cache_size_limit_of_dynamo
 
+from datetime import timedelta, datetime
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
@@ -58,6 +60,9 @@ def parse_args():
 
 
 def main():
+    start_time = datetime.now() + timedelta(hours=9)
+    print("[CS470] Start Time: " + format(start_time, '%Y.%m.%d %H:%M:%S') + " (KST)")
+
     args = parse_args()
 
     # Reduce the number of repeated compilations and improve
@@ -115,6 +120,10 @@ def main():
 
     # start training
     runner.train()
+
+    end_time = datetime.now() + timedelta(hours=9)
+    print("[CS470] End Time: " + format(end_time, '%Y.%m.%d %H:%M:%S') + " (KST)")
+    print("[CS470] Takes " + str(timedelta(seconds=(end_time - start_time).seconds)))
 
 
 if __name__ == '__main__':
