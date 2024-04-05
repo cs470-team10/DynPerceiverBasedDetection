@@ -1,3 +1,9 @@
+# CS470
+custom_imports = dict(imports=['mmpretrain.models'], allow_failed_imports=False)
+# trained for ImageNet-1K (https://mmpretrain.readthedocs.io/en/latest/papers/regnet.html)
+pretrained = 'https://download.openmmlab.com/mmclassification/v0/regnet/regnetx-800mf_8xb128_in1k_20211213-222b0f11.pth'
+
+
 auto_scale_lr = dict(base_batch_size=16, enable=False)
 backend_args = None
 data_root = 'data/coco/'
@@ -19,10 +25,11 @@ log_level = 'INFO'
 log_processor = dict(by_epoch=True, type='LogProcessor', window_size=50)
 model = dict(
     backbone=dict(
+        type='mmpretrain.RegNet',
         arch='regnetx_800mf',
-        frozen_stages=1,
         init_cfg=dict(
-            checkpoint='./convert/regnetx_imagenet_pretrained.pth', type='Pretrained'),
+            checkpoint=pretrained, type='Pretrained', prefix='backbone.'),
+        frozen_stages=1,
         norm_cfg=dict(requires_grad=True, type='BN'),
         norm_eval=True,
         out_indices=(
@@ -30,9 +37,7 @@ model = dict(
             1,
             2,
             3,
-        ),
-        style='pytorch',
-        type='RegNet'),
+        )),
     bbox_head=dict(
         anchor_generator=dict(
             octave_base_scale=4,
@@ -125,8 +130,8 @@ optim_wrapper = dict(
     optimizer=dict(lr=0.02, momentum=0.9, type='SGD', weight_decay=5e-05),
     type='OptimWrapper')
 param_scheduler = [
-    # dict(
-    #     begin=0, by_epoch=False, end=500, start_factor=0.001, type='LinearLR'),
+    dict(
+        begin=0, by_epoch=False, end=500, start_factor=0.001, type='LinearLR'),
     dict(
         begin=0,
         by_epoch=True,
