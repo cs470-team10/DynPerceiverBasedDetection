@@ -273,3 +273,10 @@ visualizer = dict(
     vis_backends=[
         dict(type='LocalVisBackend'),
     ])
+custom_hooks = [
+    dict(type='WandbLoggerHook',
+         init_kwargs=dict(project='cs470', entity='plasma3365'),
+         interval=10,
+         log_checkpoint=True,
+         log_model=True)
+]

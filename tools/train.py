@@ -81,7 +81,7 @@ def main():
     entity='plasma3365',
     # 구성 파일에서 중요한 설정을 딕셔너리로 추출하여 W&B에 전달할 수 있습니다.
     config=dict(cfg),
-    name=f"Training Run - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+    name=f"Training Run - {start_time.strftime('%Y-%m-%d %H:%M:%S (KST)')}",
     tags=['MMDetection', 'RegNet', 'RetinaNet']
     )
 
