@@ -15,3 +15,11 @@ model = dict(
         in_channels=[64, 128, 288, 672],
         out_channels=256,
         num_outs=5))
+
+custom_hooks = [
+    dict(type='WandbLoggerHook',
+         init_kwargs=dict(project='cs470', entity='plasma3365'),
+         interval=10,
+         log_checkpoint=True,
+         log_model=True)
+]

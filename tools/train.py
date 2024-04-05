@@ -11,6 +11,7 @@ from mmdet.utils import setup_cache_size_limit_of_dynamo
 
 from datetime import timedelta, datetime
 
+import wandb
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
@@ -69,11 +70,20 @@ def main():
     # training speed.
     setup_cache_size_limit_of_dynamo()
 
-    # load config
+    # load config    
     cfg = Config.fromfile(args.config)
     cfg.launcher = args.launcher
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
+
+    wandb.init(
+    project='cs470',
+    entity='plasma3365',
+    # 구성 파일에서 중요한 설정을 딕셔너리로 추출하여 W&B에 전달할 수 있습니다.
+    config=dict(cfg),
+    name=f"Training Run - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+    tags=['MMDetection', 'RegNet', 'RetinaNet']
+    )
 
     # work_dir is determined in this priority: CLI > segment in file > filename
     if args.work_dir is not None:
