@@ -124,3 +124,7 @@ work_dirs/
 
 # W&B
 wandb/*
+
+# log
+*.out
+flops.txt
