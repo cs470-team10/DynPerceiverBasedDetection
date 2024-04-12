@@ -4,7 +4,9 @@ custom_imports = dict(
     allow_failed_imports=False)
 model = dict(
     backbone=dict(
-        type='DynPerceiverBaseline', pretrained_file="./baselines/regnety_800mf_with_dyn_perceiver/reg800m_perceiver_t128.pth"),
+        type='DynPerceiverBaseline',
+        init_cfg=dict(type='Pretrained', 
+                      checkpoint='./baselines/regnety_800mf_with_dyn_perceiver/reg800m_perceiver_t128_converted.pth')),
     neck=dict(
         type='FPN',
         # in_channels=[64, 128, 288, 672],

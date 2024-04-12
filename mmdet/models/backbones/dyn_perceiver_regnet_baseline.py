@@ -1,13 +1,13 @@
 from dyn_perceiver.dyn_perceiver_regnet_model import DynPerceiver
 import torch.nn as nn
-import torch
 from mmdet.registry import MODELS
+from mmengine.model import BaseModule
 
 @MODELS.register_module()
-class DynPerceiverBaseline(nn.Module):
-    def __init__(self, pretrained_file: str, **args):
-        super().__init__()
-        self.model = DynPerceiver(
+class DynPerceiverBaseline(BaseModule):
+    def __init__(self, init_cfg, **args):
+        super(DynPerceiverBaseline, self).__init__(init_cfg)
+        self.dyn_perceiver = DynPerceiver(
             num_latents=128,
             cnn_arch='regnet_y_800mf',
             depth_factor=[1,1,1,2],
@@ -18,13 +18,12 @@ class DynPerceiverBaseline(nn.Module):
             with_dwc=True,
             with_z2x=True,
             with_isc=True)
+        if (init_cfg == None or init_cfg['type'] != 'Pretrained' or init_cfg['checkpoint'] == None or not isinstance(init_cfg['checkpoint'], str)):
+            raise 'A pretrained model must be provided.'
         
-        checkpoint = torch.load(pretrained_file)
-        self.model.load_state_dict(checkpoint['model'])
-        print("[CS470] backbone checkpoint loaded.")
 
     def forward(self, x):
-        _y_early3, _y_att, _y_cnn, _y_merge, outs = self.model.forward(x)
+        _y_early3, _y_att, _y_cnn, _y_merge, outs = self.dyn_perceiver.forward(x)
         # torch.Size([2, 64, 200, 304])
         # torch.Size([2, 144, 100, 152])
         # torch.Size([2, 320, 50, 76])

@@ -35,6 +35,10 @@ nohup python3 tools/test.py \
     baselines/regnet_800mf_wo_dyn_perceiver/retinanet_regnetx-800MF_fpn_1x_imageNet.py \
     work_dirs/retinanet_regnetx-800MF_fpn_1x_imageNet/epoch_12.pth > retina800.out &
 
+# Convert weight
+python3 tools/model_converters/dyn2mmdet.py \
+    ./baselines/regnety_800mf_with_dyn_perceiver/reg800m_perceiver_t128.pth \
+    ./baselines/regnety_800mf_with_dyn_perceiver/reg800m_perceiver_t128_converted.pth
 
 nohup python3 tools/train.py \
     baselines/regnety_800mf_with_dyn_perceiver/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet.py \
