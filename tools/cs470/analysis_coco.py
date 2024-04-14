@@ -37,7 +37,6 @@ def analysis(image_id):
             size = get_size(w, h)
             class_name = sanitize_text(coco.loadCats(annotation["category_id"])[0]["name"])
             csv_file.write(f"{image_id},{class_name},{w},{h},{w*h},{size},{exit_stage},{estimated_class}\n")
-            csv_file.write(f"{image_id},{w},{h},{size},{class_name}")
         return True
     else:
         return False
