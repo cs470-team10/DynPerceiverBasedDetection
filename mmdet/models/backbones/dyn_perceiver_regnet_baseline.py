@@ -5,7 +5,7 @@ from mmengine.model import BaseModule
 
 @MODELS.register_module()
 class DynPerceiverBaseline(BaseModule):
-    def __init__(self, init_cfg, **args):
+    def __init__(self, init_cfg, frozen_stages, **args):
         super(DynPerceiverBaseline, self).__init__(init_cfg)
         self.dyn_perceiver = DynPerceiver(
             num_latents=128,
@@ -20,6 +20,16 @@ class DynPerceiverBaseline(BaseModule):
             with_isc=True)
         if (init_cfg == None or init_cfg['type'] != 'Pretrained' or init_cfg['checkpoint'] == None or not isinstance(init_cfg['checkpoint'], str)):
             raise 'A pretrained model must be provided.'
+
+        # freeze stages
+        for name, param in self.dyn_perceiver.named_parameters():
+            if frozen_stages >= 0 and 'cnn_stem' in name:
+                print(name + " freezed!")
+                param.requires_grad = False
+            for i in range(1, frozen_stages + 1):
+                if ('cnn_body.block' + str(i)) in name:
+                    print(name + " freezed!")
+                    param.requires_grad = False
         
 
     def forward(self, x):
