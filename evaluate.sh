@@ -1,3 +1,9 @@
+python3 demo/image_demo.py \
+    data/coco/val2017/000000446703.jpg \
+    models/retinanet_regnetx-1.6GF_fpn_1x_coco.py \
+    --weights models/retinanet_regnetx-1.6GF_fpn_1x_coco_20200517_191403-37009a9d.pth \
+    --device cpu
+
 nohup python3 tools/test.py \
     models/retinanet_regnetx-1.6GF_fpn_1x_coco.py \
     models/retinanet_regnetx-1.6GF_fpn_1x_coco_20200517_191403-37009a9d.pth > retina1.6.out &

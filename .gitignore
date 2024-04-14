@@ -128,3 +128,6 @@ wandb/*
 # log
 *.out
 flops.txt
+
+# Analysis
+coco_analysis
