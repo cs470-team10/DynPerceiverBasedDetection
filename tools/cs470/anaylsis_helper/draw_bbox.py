@@ -10,7 +10,6 @@ color_list = ["pink", "red", "teal", "blue", "orange", "yellow", "black", "magen
 
 def draw_bbox(coco, image, output_dir, set_name, image_id, exit_stage, estimated, annotations):
     fig, ax = plt.subplots(figsize=(15,10))
-    
     for annotation in annotations:
         x, y, w, h = [int(b) for b in annotation['bbox']]
         size = get_size(w, h)
@@ -21,15 +20,21 @@ def draw_bbox(coco, image, output_dir, set_name, image_id, exit_stage, estimated
         t_box=ax.text(x, y, class_name.capitalize(),  color='red', fontsize=20)
         t_box.set_bbox(dict(boxstyle='square, pad=0.2',facecolor='white', alpha=0.6, edgecolor='blue'))
         ax.add_patch(rect)
+    class_name_sanitized = re.sub('[^0-9a-zA-Z]+', '_', class_name)
+    os.makedirs(f'{output_dir}/{class_name_sanitized}', exist_ok=True)
+    os.makedirs(f'{output_dir}/{class_name_sanitized}/exit_{exit_stage}', exist_ok=True)
+    filename = f'{output_dir}/{class_name_sanitized}/exit_{exit_stage}/{str(image_id).zfill(12)}.jpg'
+
+    if (os.path.exists(filename)):
+        plt.close()
+        return
     ax.axis('off')
     ax.imshow(image)
     ax.set_xlabel('Longitude')
     ax.set_title(f"({size.capitalize()}) {class_name.capitalize()} ({set_name} id: {image_id}) - Exiting in {exit_stage} (Estimated: {get_imagenet_id(estimated).capitalize()})")
-    class_name = re.sub('[^0-9a-zA-Z]+', '_', class_name)
-    os.makedirs(f'{output_dir}/{class_name}', exist_ok=True)
-    os.makedirs(f'{output_dir}/{class_name}/exit_{exit_stage}', exist_ok=True)
+    
     plt.tight_layout()
-    plt.savefig(f'{output_dir}/{class_name}/exit_{exit_stage}/{str(image_id).zfill(12)}.jpg')
+    plt.savefig(filename)
     plt.close()
 
 def get_size(w, h):

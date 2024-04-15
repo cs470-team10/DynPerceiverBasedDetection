@@ -217,7 +217,7 @@ def draw_graph(config_entry, small_total, medium_total, large_total):
                 s.append(0)
             else:
                 s.append(20000.0 * (total * 1.0 / divide))
-    color = [color_list[(color_index + i - 1) % len(color_list)] for i in x]
+    color = [color_list[(color_index + i - 1) % len(color_list)] for i in y]
     draw_graph_entry(x, y, s, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}', yticks=[1,2,3])
 
     i += 1
