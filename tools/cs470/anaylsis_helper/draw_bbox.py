@@ -26,10 +26,10 @@ def draw_bbox(coco, image, output_dir, set_name, image_id, exit_stage, estimated
     ax.set_xlabel('Longitude')
     ax.set_title(f"({size.capitalize()}) {class_name.capitalize()} ({set_name} id: {image_id}) - Exiting in {exit_stage} (Estimated: {get_imagenet_id(estimated).capitalize()})")
     class_name = re.sub('[^0-9a-zA-Z]+', '_', class_name)
-    os.makedirs(f'{output_dir}/images/{class_name}', exist_ok=True)
-    os.makedirs(f'{output_dir}/images/{class_name}/exit_{exit_stage}', exist_ok=True)
+    os.makedirs(f'{output_dir}/{class_name}', exist_ok=True)
+    os.makedirs(f'{output_dir}/{class_name}/exit_{exit_stage}', exist_ok=True)
     plt.tight_layout()
-    plt.savefig(f'{output_dir}/images/{class_name}/exit_{exit_stage}/{str(image_id).zfill(12)}.jpg')
+    plt.savefig(f'{output_dir}/{class_name}/exit_{exit_stage}/{str(image_id).zfill(12)}.jpg')
     plt.close()
 
 def get_size(w, h):
