@@ -50,7 +50,6 @@ from tools.cs470.anaylsis_helper.draw_bbox import draw_bbox, get_size, sanitize_
 from tools.cs470.anaylsis_helper.dyn_perceiver_test import DynPerceiverTest
 from tools.cs470.anaylsis_helper.imagenet_mapping import get_imagenet_id
 from tqdm import tqdm
-from PIL import Image
 import re
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
@@ -83,8 +82,7 @@ def analysis_image(image_id, model, coco, config):
         image_info = coco.loadImgs(image_id)[0]
         image_width = image_info["width"]
         image_height = image_info["height"]
-        image = Image.open(f"{data_dir}/{set_name}/{str(image_id).zfill(12)}.jpg")
-        out = model.forward(image)
+        image, value, index = model.forward(image_id, f"{data_dir}/{set_name}/{str(image_id).zfill(12)}.jpg", len(draw_bbox_indexes) > 0)
         annotation = annotations[0]
 
         x, y, w, h = [int(b) for b in annotation['bbox']]
@@ -93,14 +91,14 @@ def analysis_image(image_id, model, coco, config):
         append_default(image_id,class_name,image_width,image_height,w,h,w*h,size,(w * h) / (image_width * image_height))
         for config_entry in config:
             T = config_entry["threshold"]
-            exit_stage, estimated = model.analysis_threshold(out, T)
+            exit_stage, estimated = model.analysis_threshold(value, index, T)
             estimated_class = sanitize_text(get_imagenet_id(estimated))
             append_threshold(config_entry['index'], exit_stage, estimated_class)
 
         if (len(draw_bbox_indexes) > 0):
             for draw_bbox_index in draw_bbox_indexes:
                 T = config[draw_bbox_index]["threshold"]
-                exit_stage, estimated = model.analysis_threshold(out, T)
+                exit_stage, estimated = model.analysis_threshold(value, index, T)
                 draw_bbox(coco, image, f"{output_dir}/images/{file_name(config[draw_bbox_index], 'images', '')}", set_name, image_id, exit_stage, estimated, annotations)
 
 def append_default(image_id, class_name, image_width, image_height, bbox_width, bbox_height, bbox_size_1, bbox_size_2, bbox_ratio):
@@ -241,9 +239,11 @@ def analysis(config):
             os.makedirs(f"{output_dir}/images/{file_name(config[draw_bbox_index], 'images', '')}", exist_ok=True)
         print("\n")
     coco = _coco.COCO(f"{data_dir}/annotations/instances_{set_name}.json")
-    dyn_perceiver = DynPerceiverTest(base_dir, pretrained_file, coco)
+    dyn_perceiver = DynPerceiverTest(base_dir, output_dir, pretrained_file)
     for image_id in tqdm(coco.getImgIds(), desc=f'Analyzing {set_name} images'):
         analysis_image(image_id, dyn_perceiver, coco, config)
+    
+    dyn_perceiver.save_cache()
 
     small_total = 0
     medium_total = 0
