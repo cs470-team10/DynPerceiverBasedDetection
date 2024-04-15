@@ -29,21 +29,21 @@ def analysis(image_id):
         image_width = image_info["width"]
         image_height = image_info["height"]
         image = Image.open(f"{data_dir}/{set_name}/{str(image_id).zfill(12)}.jpg")
-        exit_stage, estimated = dyn_perceiver.forward(image, image_width, image_height)
+        exit_stage, estimated = dyn_perceiver.forward(image)
         estimated_class = sanitize_text(get_imagenet_id(estimated))
         draw_bbox(coco, image, output_dir, set_name, image_id, exit_stage, estimated, annotations)
         for annotation in annotations:
             x, y, w, h = [int(b) for b in annotation['bbox']]
             size = get_size(w, h)
             class_name = sanitize_text(coco.loadCats(annotation["category_id"])[0]["name"])
-            csv_file.write(f"{image_id},{class_name},{w},{h},{w*h},{size},{exit_stage},{estimated_class}\n")
+            csv_file.write(f"{image_id},{class_name},{image_width},{image_height},{w},{h},{w*h},{size},{image_width * image_height / (w * h)},{exit_stage},{estimated_class}\n")
         return True
     else:
         return False
 
 
 csv_file = open(f"{output_dir}/coco_analysis.csv", "w")
-csv_file.write("image_id,class_name,bbox_width,bbox_height,bbox_size_1,bbox_size_2,exit_stage,estimated_class\n")
+csv_file.write("image_id,class_name,image_width,image_height,bbox_width,bbox_height,bbox_size_1,bbox_size_2,bbox_ratio,exit_stage,estimated_class\n")
 total_length = 0
 length = 0
 

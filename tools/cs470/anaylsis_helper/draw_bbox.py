@@ -24,7 +24,7 @@ def draw_bbox(coco, image, output_dir, set_name, image_id, exit_stage, estimated
     ax.axis('off')
     ax.imshow(image)
     ax.set_xlabel('Longitude')
-    ax.set_title(f"({size.capitalize()}) {class_name.capitalize()} ({set_name} id: {image_id}) - Exiting in {exit_stage} (estimated: {get_imagenet_id(estimated)})")
+    ax.set_title(f"({size.capitalize()}) {class_name.capitalize()} ({set_name} id: {image_id}) - Exiting in {exit_stage} (Estimated: {get_imagenet_id(estimated).capitalize()})")
     class_name = re.sub('[^0-9a-zA-Z]+', '_', class_name)
     os.makedirs(f'{output_dir}/images/{class_name}', exist_ok=True)
     os.makedirs(f'{output_dir}/images/{class_name}/exit_{exit_stage}', exist_ok=True)
@@ -41,4 +41,4 @@ def get_size(w, h):
         return "large"
     
 def sanitize_text(text:str):
-    return re.sub('[\t]+', '_', re.sub('[,]+', '/', re.sub('[^0-9a-zA-Z]+', '_', text)))
+    return re.sub('[\t]+', '_', re.sub('[,]+', '/', re.sub('[^0-9a-zA-Z|/|\t]+', '_', text)))

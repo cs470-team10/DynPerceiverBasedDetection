@@ -34,7 +34,7 @@ class DynPerceiverTest:
         self.softmax = nn.Softmax(dim=0)
 
 
-    def forward(self, image: Image, w: int, h: int):
+    def forward(self, image: Image):
         image_tensor = self.transform(image).unsqueeze(0)
         with torch.no_grad():
             y_early3, y_att, y_cnn, y_merge, _ = self.model.forward(image_tensor)
