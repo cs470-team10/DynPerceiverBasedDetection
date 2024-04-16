@@ -5,6 +5,7 @@ from torchvision import transforms
 import torch.nn as nn
 import os
 import json
+import traceback
 
 class DynPerceiverTest:
     def __init__(self, base_dir, output_dir, pretrained_file, save_frequency = 10):
@@ -45,12 +46,14 @@ class DynPerceiverTest:
         index = cache['index']
         return True, value, index
     
-    def model_forward(self, image: Image):
+    def model_forward(self, image: Image, image_id):
         try:
             image_tensor = self.transform(image).unsqueeze(0)
             with torch.no_grad():
                 y_early3, y_att, y_cnn, y_merge, _ = self.model.forward(image_tensor)
-        except:
+        except Exception as e:
+            self.errors[f"{image_id}"] = str(e) + "\n" + str(traceback.format_exc())
+            self.save_cache()
             return False, [], []
         value = []
         index = []
@@ -75,18 +78,22 @@ class DynPerceiverTest:
     # Cache operation
     def load_cache(self):
         self.cache = {}
+        self.errors = {}
         self.save_frequency_count = 0
         if os.path.exists(self.cache_path):
             with open(self.cache_path, 'r') as json_file:
                 json_data = json.load(json_file)
                 self.cache = json_data['cache']
+                self.errors = json_data['errors']
     
     def save_cache(self):
         with open(self.cache_path, 'w') as f:
-            json.dump({'cache' : self.cache}, f, indent = 2)
+            json.dump({'errors': self.errors, 'cache' : self.cache}, f, indent = 2)
         self.save_frequency_count = 0
     
     def forward(self, image_id, image_path, require_image):
+        if (self.errors.get(f"{image_id}") is not None):
+            return False, None, [], []
         found, value, index = self.id_forward(image_id)
         if (found):
             image = Image.open(image_path) if require_image else None
@@ -94,9 +101,8 @@ class DynPerceiverTest:
             if (self.model is None):
                 self.load_model()
             image = Image.open(image_path)
-            result, value, index = self.model_forward(image)
+            result, value, index = self.model_forward(image, image_id)
             if (result is False):
-                print(f"Failed to analysis image: {image_id}")
                 return False, image, value, index
             self.append_cache(image_id, value, index)
         return True, image, value, index
