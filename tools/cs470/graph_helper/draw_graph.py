@@ -4,9 +4,9 @@ from tools.cs470.graph_helper.graphs import *
 from tools.cs470.anaylsis_helper.formatter import *
 
 def graph_path(i, output_dir, config_entry, title):
-    formatted_title = str(i) + "_" + re.sub("[\t]+", "_", title).lower()
+    formatted_title = str(i) + "_" + re.sub('[^0-9a-zA-Z]+', '_', title).lower()
     os.makedirs(f"{output_dir}/graphs/{formatted_title}", exist_ok=True)
-    return f"{output_dir}/graphs/{formatted_title}/" + file_name(config_entry, name = re.sub("[\t]+", "_", title).lower(), posfix=".jpg")
+    return f"{output_dir}/graphs/{formatted_title}/" + file_name(config_entry, name = re.sub('[^0-9a-zA-Z]+', '_', title).lower(), posfix=".jpg")
 
 def graph_title(config_entry, title):
     return title + "\n" + formatting_config_entry(config_entry)
