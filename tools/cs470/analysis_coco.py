@@ -37,7 +37,7 @@
 
 base_dir = './' # 기본 위치
 data_dir = "data/coco" # 데이터셋 위치
-set_name = "val2017" # 측정하고자 하는 validation name
+set_name = "val2017" # 측정하고자 하는 set name
 output_dir = "coco_analysis" # 어디다가 저장할건지?
 pretrained_file = 'baselines/regnety_800mf_with_dyn_perceiver/reg800m_perceiver_t128.pth' # dynamic perceiver의 pre-train weight을 가져오면 됨.
 draw_bbox_indexes = [] # bbox 그리고 싶은 config의 index를 넣어주면 됩니다. 안그리고 싶으면 비워두면 됨.
@@ -135,7 +135,32 @@ def graph_path(i, config_entry, title):
 def graph_title(config_entry, title):
     return title + "\n" + formatting_config_entry(config_entry)
 
-def draw_graph_entry(x, y, s, color, xticks, title, x_title, y_title, output_dir, label_format = '{:,.0f}', yticks = []):
+def draw_side_by_side_box_plot(data, colors, xticks, title, x_title, y_title, output_dir, label_format = '{:,.0f}', yticks = []):
+    fig, ax = plt.subplots(figsize=(15, 10))
+    box_dict = ax.boxplot(data, patch_artist=True,  showmeans=True)
+    for item in ['boxes', 'fliers', 'medians', 'means']:
+        for sub_item, color in zip(box_dict[item], colors):
+            plt.setp(sub_item, color=color)
+    for item in ['whiskers', 'caps']:
+        for sub_items, color in zip(zip(box_dict[item][::2],box_dict[item][1::2]), colors):
+            plt.setp(sub_items, color=color)
+
+    plt.xlabel(x_title, fontdict = {'fontsize' : 15})
+    plt.xticks(xticks, fontsize = 15)
+    if (len(yticks) > 0):
+        plt.yticks(yticks, fontsize = 15)
+    else:
+        plt.yticks(fontsize = 15)
+    plt.ylabel(y_title, fontdict = {'fontsize' : 15})
+    plt.title(title, weight = 'bold', fontdict = {'fontsize' : 20})
+    ticks_loc = plt.gca().get_yticks().tolist()
+    plt.gca().yaxis.set_major_locator(mticker.FixedLocator(ticks_loc))
+    plt.gca().set_yticklabels([label_format.format(x) for x in ticks_loc])
+    plt.tight_layout()
+    plt.savefig(output_dir)
+    plt.close()
+
+def draw_scatter_graph_entry(x, y, s, color, xticks, title, x_title, y_title, output_dir, label_format = '{:,.0f}', yticks = []):
     plt.figure(figsize=(15, 10))
     plt.scatter(x, y, s=s, color = color)
 
@@ -158,40 +183,40 @@ def draw_graph(config_entry, small_total, medium_total, large_total):
     x_title = "Early Exit Stages"
     index = config_entry['index']
     
-    i = 1
+    graph_number = 1
     color_index = 0
 
     ## Bbox size per Exit Stage
     exp_title = "Bbox Size per Exit Stage"
-    path = graph_path(i, config_entry, exp_title)
+    path = graph_path(graph_number, config_entry, exp_title)
     title = graph_title(config_entry, exp_title)
     y_title = "Bbox Size(pixel^2)"
     x = exit_stages[index]
     y = [i * 1 for i in bbox_size_1s]
     s = [80 for i in x]
     color = [color_list[(color_index + i - 1) % len(color_list)] for i in x]
-    draw_graph_entry(x, y, s, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}')
+    draw_scatter_graph_entry(x, y, s, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}')
 
-    i += 1
+    graph_number += 1
     color_index += 4
 
     ## Bbox ratio per Exit Stage
     exp_title = "Bbox Ratio per Exit Stage"
-    path = graph_path(i, config_entry, exp_title)
+    path = graph_path(graph_number, config_entry, exp_title)
     title = graph_title(config_entry, exp_title)
     y_title = "Bbox Ratio(%)"
     x = exit_stages[index]
     y = [i * 100 for i in bbox_ratios]
     s = [80 for i in x]
     color = [color_list[(color_index + i - 1) % len(color_list)] for i in x]
-    draw_graph_entry(x, y, s, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}%')
+    draw_scatter_graph_entry(x, y, s, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}%')
 
-    i += 1
+    graph_number += 1
     color_index += 4
 
     ## mAP size per Exit Stage
     exp_title = "mAP Size per Exit Stage"
-    path = graph_path(i, config_entry, exp_title)
+    path = graph_path(graph_number, config_entry, exp_title)
     title = graph_title(config_entry, exp_title)
     y_title = "mAP Size(small = 1, medium = 2, large = 3)"
     x = [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4]
@@ -216,11 +241,47 @@ def draw_graph(config_entry, small_total, medium_total, large_total):
             if (divide == 0):
                 s.append(0)
             else:
-                s.append(20000.0 * (total * 1.0 / divide))
+                s.append(100000.0 * (total * 1.0 / divide))
     color = [color_list[(color_index + i - 1) % len(color_list)] for i in y]
-    draw_graph_entry(x, y, s, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}', yticks=[1,2,3])
+    draw_scatter_graph_entry(x, y, s, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}', yticks=[1,2,3])
 
-    i += 1
+    graph_number += 1
+    color_index += 4
+
+    ## Bbox size per Exit stage Side-by-Side Box Plot
+    exp_title = "Bbox size per Exit stage Side-by-Side Box Plot"
+    path = graph_path(graph_number, config_entry, exp_title)
+    title = graph_title(config_entry, exp_title)
+    y_title = "Bbox Size(pixel^2)"
+
+    data = [[],[],[],[]]
+
+    for i in range(len(image_ids)):
+        exit_stage = exit_stages[index][i]
+        data[exit_stage - 1].append(bbox_size_1s[i])
+
+    color = [color_list[(color_index + i) % len(color_list)] for i in range(4)]
+    draw_side_by_side_box_plot(data, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}')
+
+    graph_number += 1
+    color_index += 4
+
+    ## Bbox ratio per Exit stage Side-by-Side Box Plot
+    exp_title = "Bbox ratio per Exit stage Side-by-Side Box Plot"
+    path = graph_path(graph_number, config_entry, exp_title)
+    title = graph_title(config_entry, exp_title)
+    y_title = "Bbox Ratio(%)"
+
+    data = [[],[],[],[]]
+
+    for i in range(len(image_ids)):
+        exit_stage = exit_stages[index][i]
+        data[exit_stage - 1].append(bbox_ratios[i] * 100)
+
+    color = [color_list[(color_index + i) % len(color_list)] for i in range(4)]
+    draw_side_by_side_box_plot(data, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}', yticks=[i * 10 for i in range(11)])
+
+    graph_number += 1
     color_index += 4
 
 
