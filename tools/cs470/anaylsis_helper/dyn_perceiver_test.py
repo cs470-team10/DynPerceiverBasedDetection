@@ -46,16 +46,19 @@ class DynPerceiverTest:
         return True, value, index
     
     def model_forward(self, image: Image):
-        image_tensor = self.transform(image).unsqueeze(0)
-        with torch.no_grad():
-            y_early3, y_att, y_cnn, y_merge, _ = self.model.forward(image_tensor)
+        try:
+            image_tensor = self.transform(image).unsqueeze(0)
+            with torch.no_grad():
+                y_early3, y_att, y_cnn, y_merge, _ = self.model.forward(image_tensor)
+        except:
+            return False, [], []
         value = []
         index = []
         value, index = self.formatting(y_early3, value, index)
         value, index = self.formatting(y_att, value, index)
         value, index = self.formatting(y_cnn, value, index)
         value, index = self.formatting(y_merge, value, index)
-        return value, index
+        return True, value, index
     
     def formatting(self, result, value, index):
         result = self.softmax(result.squeeze())
@@ -91,9 +94,12 @@ class DynPerceiverTest:
             if (self.model is None):
                 self.load_model()
             image = Image.open(image_path)
-            value, index = self.model_forward(image)
+            result, value, index = self.model_forward(image)
+            if (result is False):
+                print(f"Failed to analysis image: {image_id}")
+                return False, image, value, index
             self.append_cache(image_id, value, index)
-        return image, value, index
+        return True, image, value, index
     
     def append_cache(self, image_id, value, index):
         self.cache[f"{image_id}"] = {'value': value, 'index': index}

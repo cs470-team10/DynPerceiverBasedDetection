@@ -37,7 +37,7 @@
 
 base_dir = './' # 기본 위치
 data_dir = "data/coco" # 데이터셋 위치
-set_name = "val2017" # 측정하고자 하는 validation name
+set_name = "train2017" # 측정하고자 하는 validation name
 output_dir = "coco_analysis" # 어디다가 저장할건지?
 pretrained_file = 'baselines/regnety_800mf_with_dyn_perceiver/reg800m_perceiver_t128.pth' # dynamic perceiver의 pre-train weight을 가져오면 됨.
 draw_bbox_indexes = [] # bbox 그리고 싶은 config의 index를 넣어주면 됩니다. 안그리고 싶으면 비워두면 됨.
@@ -82,7 +82,9 @@ def analysis_image(image_id, model, coco, config):
         image_info = coco.loadImgs(image_id)[0]
         image_width = image_info["width"]
         image_height = image_info["height"]
-        image, value, index = model.forward(image_id, f"{data_dir}/{set_name}/{str(image_id).zfill(12)}.jpg", len(draw_bbox_indexes) > 0)
+        result, image, value, index = model.forward(image_id, f"{data_dir}/{set_name}/{str(image_id).zfill(12)}.jpg", len(draw_bbox_indexes) > 0)
+        if (result is False):
+            return
         annotation = annotations[0]
 
         x, y, w, h = [int(b) for b in annotation['bbox']]
