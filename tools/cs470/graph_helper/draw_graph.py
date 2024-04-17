@@ -4,17 +4,36 @@ from tools.cs470.graph_helper.graphs import *
 from tools.cs470.anaylsis_helper.formatter import *
 
 def graph_path(i, output_dir, config_entry, title):
-    formatted_title = str(i) + "_" + re.sub('[^0-9a-zA-Z]+', '_', title).lower()
-    os.makedirs(f"{output_dir}/graphs/{formatted_title}", exist_ok=True)
-    return f"{output_dir}/graphs/{formatted_title}/" + file_name(config_entry, name = re.sub('[^0-9a-zA-Z]+', '_', title).lower(), posfix=".jpg")
+    formatted_title = re.sub('[^0-9a-zA-Z]+', '_', title).lower()
+    if config_entry is not None:
+        formatted_title = str(i) + "_" + formatted_title
+        os.makedirs(f"{output_dir}/graphs/{formatted_title}", exist_ok=True)
+        return f"{output_dir}/graphs/{formatted_title}/" + file_name(config_entry, name = re.sub('[^0-9a-zA-Z]+', '_', title).lower(), posfix=".jpg")
+    else:
+        return f"{output_dir}/graphs/{formatted_title}.jpg"
+        
 
 def graph_title(config_entry, title):
-    return title + "\n" + formatting_config_entry(config_entry)
+    return title + (("\n" + formatting_config_entry(config_entry)) if config_entry is not None else "")
 
 def draw_graph(output_dir, config_entry, small_total, medium_total, large_total, image_ids, exit_stages, bbox_size_1s, bbox_size_2s, bbox_ratios):
     x_title = "Early Exit Stages"
-    index = config_entry['index']
+    exit_stages = exit_stages[config_entry['index']]
     
+    ## Bbox size Histogram
+    exp_title = "Bbox Size Histogram"
+    path = graph_path(0, output_dir, None, exp_title)
+    title = graph_title(None, exp_title)
+    if (not os.path.exists(path)):
+        draw_histogram(bbox_size_1s, 100, 'blue', title, 'Bbox Size(pixel^2)', 'Number of Images', path)
+
+    ## Bbox ratio Histogram
+    exp_title = "Bbox Ratio Histogram"
+    path = graph_path(0, output_dir, None, exp_title)
+    title = graph_title(None, exp_title)
+    if (not os.path.exists(path)):
+        draw_histogram([i * 100 for i in bbox_ratios], 100, 'red', title, 'Bbox Ratio(%)', 'Number of Images', path, label_format='{:,.0f}%', xticks=[i * 10 for i in range(11)])
+
     graph_number = 1
     color_index = 4
 
@@ -24,71 +43,107 @@ def draw_graph(output_dir, config_entry, small_total, medium_total, large_total,
     title = graph_title(config_entry, exp_title)
     data = [0, 0, 0, 0]
     for i in range(len(image_ids)):
-        data[exit_stages[index][i] - 1] += 1
+        data[exit_stages[i] - 1] += 1
     color = [color_list[(color_index + i) % len(color_list)] for i in range(4)]
     draw_pie_chart(data, color, title, path)
 
     graph_number += 1
     color_index += 4
 
-    ## Bbox size per Exit Stage
-    exp_title = "Bbox Size per Exit Stage"
-    path = graph_path(graph_number, output_dir, config_entry, exp_title)
-    title = graph_title(config_entry, exp_title)
-    y_title = "Bbox Size(pixel^2)"
-    x = exit_stages[index]
-    y = [i * 1 for i in bbox_size_1s]
-    s = [80 for i in x]
-    color = [color_list[(color_index + i - 1) % len(color_list)] for i in x]
-    draw_scatter_graph_entry(x, y, s, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}')
+    # ## Bbox size per Exit Stage
+    # exp_title = "Bbox Size per Exit Stage"
+    # path = graph_path(graph_number, output_dir, config_entry, exp_title)
+    # title = graph_title(config_entry, exp_title)
+    # y_title = "Bbox Size(pixel^2)"
+    # x = exit_stages
+    # y = [i * 1 for i in bbox_size_1s]
+    # s = [80 for i in x]
+    # color = [color_list[(color_index + i - 1) % len(color_list)] for i in x]
+    # draw_scatter_graph_entry(x, y, s, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}')
 
-    graph_number += 1
-    color_index += 4
+    # graph_number += 1
+    # color_index += 4
 
-    ## Bbox ratio per Exit Stage
-    exp_title = "Bbox Ratio per Exit Stage"
-    path = graph_path(graph_number, output_dir, config_entry, exp_title)
-    title = graph_title(config_entry, exp_title)
-    y_title = "Bbox Ratio(%)"
-    x = exit_stages[index]
-    y = [i * 100 for i in bbox_ratios]
-    s = [80 for i in x]
-    color = [color_list[(color_index + i - 1) % len(color_list)] for i in x]
-    draw_scatter_graph_entry(x, y, s, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}%', yticks=[i * 10 for i in range(11)])
+    # ## Bbox ratio per Exit Stage
+    # exp_title = "Bbox Ratio per Exit Stage"
+    # path = graph_path(graph_number, output_dir, config_entry, exp_title)
+    # title = graph_title(config_entry, exp_title)
+    # y_title = "Bbox Ratio(%)"
+    # x = exit_stages
+    # y = [i * 100 for i in bbox_ratios]
+    # s = [80 for i in x]
+    # color = [color_list[(color_index + i - 1) % len(color_list)] for i in x]
+    # draw_scatter_graph_entry(x, y, s, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}%', yticks=[i * 10 for i in range(11)])
 
-    graph_number += 1
-    color_index += 4
+    # graph_number += 1
+    # color_index += 4
 
     ## mAP size per Exit Stage
     exp_title = "mAP Size per Exit Stage"
     path = graph_path(graph_number, output_dir, config_entry, exp_title)
     title = graph_title(config_entry, exp_title)
-    y_title = "mAP Size"
-    x = [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4]
-    y = [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3]
-    s = []
+    y_title = "Percentage(%)"
+    labels = ['Large', 'Medium', 'Small']
+    data = []
+    color = [color_list[(color_index + i - 1) % len(color_list)] for i in range(len(labels))]
+    for label in labels:
+        entry = [0, 0, 0, 0]
+        if (label == 'Small'):
+            divide = small_total
+            target = 'small'
+        elif (label == 'Medium'):
+            divide = medium_total
+            target = 'medium'
+        else:
+            divide = large_total
+            target = 'large'
+        for j in range(len(image_ids)):
+            if (bbox_size_2s[j] == target):
+                entry[exit_stages[j] - 1] += 1
+        data.append([(j * 100.0 / divide if divide != 0 else 0) for j in entry])
 
-    for x_index in [1, 2, 3, 4]:
-        for y_index in [1, 2, 3]:
+    draw_bar_graph(data, labels, color, title, x_title, y_title, path, label_format='{:,.0f}%', yticks=[i * 10 for i in range(11)])
+
+    graph_number += 1
+    color_index += 3
+
+    ## Exit Stage per mAP Size
+    exp_title = "Exit Stage per mAP Size"
+    path = graph_path(graph_number, output_dir, config_entry, exp_title)
+    title = graph_title(config_entry, exp_title)
+    y_title = "Percentage(%)"
+    xtick_labels = ['Large', 'Medium', 'Small']
+    labels = ['Exit 1', 'Exit 2', 'Exit 3', 'Exit 4']
+    bar_width = 0.2
+    data = []
+    color = [color_list[(color_index + i) % len(color_list)] for i in range(len(labels))]
+    for label in labels:
+        entry = []
+        if (label == 'Exit 1'):
+            exit_stage = 1
+        elif (label == 'Exit 2'):
+            exit_stage = 2
+        elif (label == 'Exit 3'):
+            exit_stage = 3
+        else:
+            exit_stage = 4
+        for xtick_label in xtick_labels:
             total = 0
-            if (y_index == 1):
-                target = 'small'
+            if (xtick_label == 'Small'):
                 divide = small_total
-            elif (y_index == 2):
-                target = 'medium'
+                target = 'small'
+            elif (xtick_label == 'Medium'):
                 divide = medium_total
-            elif (y_index == 3):
-                target = 'large'
-                divide = large_total
-            for i in range(len(image_ids)):
-                if (bbox_size_2s[i] == target and exit_stages[index][i] == x_index):
-                    total += 1
-            if (divide == 0):
-                s.append(0)
+                target = 'medium'
             else:
-                s.append(100000.0 * (total * 1.0 / divide))
-    color = [color_list[(color_index + i - 1) % len(color_list)] for i in y]
-    draw_scatter_graph_entry(x, y, s, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}', yticks=[1,2,3], yticklabels=['small', 'medium', 'large'])
+                divide = large_total
+                target = 'large'
+            for j in range(len(image_ids)):
+                if (bbox_size_2s[j] == target and exit_stages[j] == exit_stage):
+                    total += 1
+            entry.append(total * 100.0 / divide if divide != 0 else 0)
+        data.append(entry)
+    draw_bar_graph(data, labels, color, title, "Image Size", y_title, path, label_format='{:,.0f}%', yticks=[i * 10 for i in range(11)], bar_width=bar_width, xtick_labels=xtick_labels)
 
     graph_number += 1
     color_index += 4
@@ -102,7 +157,7 @@ def draw_graph(output_dir, config_entry, small_total, medium_total, large_total,
     data = [[],[],[],[]]
 
     for i in range(len(image_ids)):
-        exit_stage = exit_stages[index][i]
+        exit_stage = exit_stages[i]
         data[exit_stage - 1].append(bbox_size_1s[i])
 
     color = [color_list[(color_index + i) % len(color_list)] for i in range(4)]
@@ -120,7 +175,7 @@ def draw_graph(output_dir, config_entry, small_total, medium_total, large_total,
     data = [[],[],[],[]]
 
     for i in range(len(image_ids)):
-        exit_stage = exit_stages[index][i]
+        exit_stage = exit_stages[i]
         data[exit_stage - 1].append(bbox_size_1s[i])
 
     color = [color_list[(color_index + i) % len(color_list)] for i in range(4)]
@@ -138,7 +193,7 @@ def draw_graph(output_dir, config_entry, small_total, medium_total, large_total,
     data = [[],[],[],[]]
 
     for i in range(len(image_ids)):
-        exit_stage = exit_stages[index][i]
+        exit_stage = exit_stages[i]
         data[exit_stage - 1].append(bbox_ratios[i] * 100)
 
     color = [color_list[(color_index + i) % len(color_list)] for i in range(4)]
@@ -156,7 +211,7 @@ def draw_graph(output_dir, config_entry, small_total, medium_total, large_total,
     data = [[],[],[],[]]
 
     for i in range(len(image_ids)):
-        exit_stage = exit_stages[index][i]
+        exit_stage = exit_stages[i]
         data[exit_stage - 1].append(bbox_ratios[i] * 100)
 
     color = [color_list[(color_index + i) % len(color_list)] for i in range(4)]
