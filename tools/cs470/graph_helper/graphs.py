@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
-xticklabels = ["Exit 1", "Exit 2", "Exit 3", "Exit 4"]
+xticklabels = ["Exit 1", "Exit 2", "Exit 3"]
 color_list = ["pink", "red", "teal", "blue", "orange", "yellow", "magenta","green","aqua"]
 
 bbox_ratio_distribution_color = "red"
@@ -74,25 +74,25 @@ def draw_side_by_side_violin_plot(data, colors, xticks, title, x_title, y_title,
     plt.savefig(output_dir)
     plt.close()
 
-# def draw_scatter_graph_entry(x, y, s, color, xticks, title, x_title, y_title, output_dir, label_format = "{:,.0f}", yticks = [], yticklabels = []):
-#     plt.figure(figsize=figsize)
-#     plt.scatter(x, y, s=s, color = color)
+def draw_scatter_graph_entry(x, y, s, color, xticks, title, x_title, y_title, output_dir, label_format = "{:,.0f}", yticks = [], yticklabels = []):
+    plt.figure(figsize=figsize)
+    plt.scatter(x, y, s=s, color = color)
 
-#     plt.xlabel(x_title, fontdict = {"fontsize" : entry_fontsize})
-#     plt.xticks(xticks, fontsize = entry_fontsize)
-#     plt.gca().set_xticklabels(xticklabels)
-#     if (len(yticks) > 0):
-#         plt.yticks(yticks, fontsize = entry_fontsize)
-#     else:
-#         plt.yticks(fontsize = entry_fontsize)
-#     plt.ylabel(y_title, fontdict = {"fontsize" : entry_fontsize})
-#     plt.title(title, weight = "bold", fontdict = {"fontsize" : title_fontsize})
-#     ticks_loc = plt.gca().get_yticks().tolist()
-#     plt.gca().yaxis.set_major_locator(mticker.FixedLocator(ticks_loc))
-#     plt.gca().set_yticklabels([label_format.format(x) for x in ticks_loc] if len(yticklabels) == 0 else yticklabels)
-#     plt.tight_layout()
-#     plt.savefig(output_dir)
-#     plt.close()
+    plt.xlabel(x_title, fontdict = {"fontsize" : entry_fontsize})
+    plt.xticks(xticks, fontsize = entry_fontsize)
+    plt.gca().set_xticklabels(xticklabels)
+    if (len(yticks) > 0):
+        plt.yticks(yticks, fontsize = entry_fontsize)
+    else:
+        plt.yticks(fontsize = entry_fontsize)
+    plt.ylabel(y_title, fontdict = {"fontsize" : entry_fontsize})
+    plt.title(title, weight = "bold", fontdict = {"fontsize" : title_fontsize})
+    ticks_loc = plt.gca().get_yticks().tolist()
+    plt.gca().yaxis.set_major_locator(mticker.FixedLocator(ticks_loc))
+    plt.gca().set_yticklabels([label_format.format(x) for x in ticks_loc] if len(yticklabels) == 0 else yticklabels)
+    plt.tight_layout()
+    plt.savefig(output_dir)
+    plt.close()
 
 def draw_pie_chart(data, colors, title, output_dir, label_format = "%.2f%%"):
     plt.figure(figsize=figsize)

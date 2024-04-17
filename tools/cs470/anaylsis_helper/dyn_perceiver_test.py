@@ -70,10 +70,11 @@ class DynPerceiverTest:
         return value, index
     
     def analysis_threshold(self, value, index, T):
-        for i in range(3):
+        # Skip stage 3 - It is unnecessary
+        for i in range(2):
             if (T[i] < value[i]):
                 return i + 1, index[i]
-        return 4, index[3]
+        return 3, index[3]
     
     # Cache operation
     def load_cache(self):

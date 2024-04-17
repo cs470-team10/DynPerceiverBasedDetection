@@ -19,6 +19,7 @@ def graph_title(config_entry, title):
 def draw_graph(output_dir, config_entry, small_total, medium_total, large_total, image_ids, exit_stages, bbox_size_1s, bbox_size_2s, bbox_ratios):
     x_title = "Early Exit Stages"
     exit_stages = exit_stages[config_entry['index']]
+    xtick_labels = ['Large', 'Medium', 'Small']
     
     ## Bbox size Histogram
     exp_title = "Bbox Size Histogram"
@@ -40,7 +41,7 @@ def draw_graph(output_dir, config_entry, small_total, medium_total, large_total,
     exp_title = "Exit Stage Pie Chart"
     path = graph_path(graph_number, output_dir, config_entry, exp_title)
     title = graph_title(config_entry, exp_title)
-    data = [0, 0, 0, 0]
+    data = [0 for _ in xtick_labels]
     for i in range(len(image_ids)):
         data[exit_stages[i] - 1] += 1
     color = exit_stage_colors
@@ -55,9 +56,9 @@ def draw_graph(output_dir, config_entry, small_total, medium_total, large_total,
     y_title = "Percentage(%)"
     labels = ['Large', 'Medium', 'Small']
     data = []
-    color = mAP_size_colors
+    color = [mAP_size_colors[len(mAP_size_colors) - 1 - i] for i in range(len(mAP_size_colors))]
     for label in labels:
-        entry = [0, 0, 0, 0]
+        entry = [0 for _ in xtick_labels]
         if (label == 'Small'):
             divide = small_total
             target = 'small'
@@ -81,9 +82,8 @@ def draw_graph(output_dir, config_entry, small_total, medium_total, large_total,
     path = graph_path(graph_number, output_dir, config_entry, exp_title)
     title = graph_title(config_entry, exp_title)
     y_title = "Percentage(%)"
-    xtick_labels = ['Large', 'Medium', 'Small']
-    labels = ['Exit 1', 'Exit 2', 'Exit 3', 'Exit 4']
-    bar_width = 0.2
+    labels = ['Exit 1', 'Exit 2', 'Exit 3']
+    bar_width = 0.25
     data = []
     color = exit_stage_colors
     for label in labels:
@@ -92,10 +92,8 @@ def draw_graph(output_dir, config_entry, small_total, medium_total, large_total,
             exit_stage = 1
         elif (label == 'Exit 2'):
             exit_stage = 2
-        elif (label == 'Exit 3'):
-            exit_stage = 3
         else:
-            exit_stage = 4
+            exit_stage = 3
         for xtick_label in xtick_labels:
             total = 0
             if (xtick_label == 'Small'):
@@ -116,70 +114,103 @@ def draw_graph(output_dir, config_entry, small_total, medium_total, large_total,
 
     graph_number += 1
 
-    ## Bbox size per Exit stage Side-by-Side Box Plot
-    exp_title = "Bbox size per Exit stage Side-by-Side Box Plot"
+    ## mAP size per Exit Stage Scatter
+    exp_title = "mAP Size per Exit Stage Scatter"
+    path = graph_path(graph_number, output_dir, config_entry, exp_title)
+    title = graph_title(config_entry, exp_title)
+    y_title = "mAP Size"
+    x = [1, 1, 1, 2, 2, 2, 3, 3, 3]
+    y = [1, 2, 3, 1, 2, 3, 1, 2, 3]
+    s = []
+
+    for x_index in [1, 2, 3]:
+        for y_index in [1, 2, 3]:
+            total = 0
+            if (y_index == 1):
+                target = 'small'
+                divide = small_total
+            elif (y_index == 2):
+                target = 'medium'
+                divide = medium_total
+            elif (y_index == 3):
+                target = 'large'
+                divide = large_total
+            for i in range(len(image_ids)):
+                if (bbox_size_2s[i] == target and exit_stages[i] == x_index):
+                    total += 1
+            if (divide == 0):
+                s.append(0)
+            else:
+                s.append(100000.0 * (total * 1.0 / divide))
+    color = [mAP_size_colors[i - 1] for i in y]
+    draw_scatter_graph_entry(x, y, s, color, [1,2,3], title, x_title, y_title, path, '{:,.0f}', yticks=[1,2,3], yticklabels=['Small', 'Medium', 'Large'])
+
+    graph_number += 1
+
+    ## Bbox size per Exit Stage Box Plot
+    exp_title = "Bbox size per Exit Stage Box Plot"
     path = graph_path(graph_number, output_dir, config_entry, exp_title)
     title = graph_title(config_entry, exp_title)
     y_title = "Bbox Size(pixel^2)"
 
-    data = [[],[],[],[]]
+    data = [[],[],[]]
 
     for i in range(len(image_ids)):
         exit_stage = exit_stages[i]
         data[exit_stage - 1].append(bbox_size_1s[i])
 
     color = exit_stage_colors
-    draw_side_by_side_box_plot(data, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}')
+    draw_side_by_side_box_plot(data, color, [1,2,3], title, x_title, y_title, path, '{:,.0f}')
 
     graph_number += 1
 
-    ## Bbox size per Exit stage Side-by-Side Violin Plot
-    exp_title = "Bbox size per Exit stage Side-by-Side Violin Plot"
+    ## Bbox size per Exit Stage Violin Plot
+    exp_title = "Bbox size per Exit Stage Violin Plot"
     path = graph_path(graph_number, output_dir, config_entry, exp_title)
     title = graph_title(config_entry, exp_title)
     y_title = "Bbox Size(pixel^2)"
 
-    data = [[],[],[],[]]
+    data = [[], [], []]
 
     for i in range(len(image_ids)):
         exit_stage = exit_stages[i]
         data[exit_stage - 1].append(bbox_size_1s[i])
 
     color = exit_stage_colors
-    draw_side_by_side_violin_plot(data, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}')
+    draw_side_by_side_violin_plot(data, color, [1, 2, 3], title, x_title, y_title, path, '{:,.0f}')
 
     graph_number += 1
 
-    ## Bbox ratio per Exit stage Side-by-Side Box Plot
-    exp_title = "Bbox ratio per Exit stage Side-by-Side Box Plot"
+    ## Bbox ratio per Exit Stage Box Plot
+    exp_title = "Bbox ratio per Exit Stage Box Plot"
     path = graph_path(graph_number, output_dir, config_entry, exp_title)
     title = graph_title(config_entry, exp_title)
     y_title = "Bbox Ratio(%)"
 
-    data = [[],[],[],[]]
+    data = [[], [], []]
 
     for i in range(len(image_ids)):
         exit_stage = exit_stages[i]
         data[exit_stage - 1].append(bbox_ratios[i] * 100)
 
     color = exit_stage_colors
-    draw_side_by_side_box_plot(data, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}%', yticks=[i * 10 for i in range(11)])
+    draw_side_by_side_box_plot(data, color, [1, 2, 3], title, x_title, y_title, path, '{:,.0f}%', yticks=[i * 10 for i in range(11)])
 
     graph_number += 1
 
-    ## Bbox ratio per Exit stage Side-by-Side Violin Plot
-    exp_title = "Bbox ratio per Exit stage Side-by-Side Violin Plot"
+    ## Bbox ratio per Exit Stage Violin Plot
+    exp_title = "Bbox ratio per Exit Stage Violin Plot"
     path = graph_path(graph_number, output_dir, config_entry, exp_title)
     title = graph_title(config_entry, exp_title)
     y_title = "Bbox Ratio(%)"
 
-    data = [[],[],[],[]]
+    data = [[], [], []]
 
     for i in range(len(image_ids)):
         exit_stage = exit_stages[i]
         data[exit_stage - 1].append(bbox_ratios[i] * 100)
 
     color = exit_stage_colors
-    draw_side_by_side_violin_plot(data, color, [1,2,3,4], title, x_title, y_title, path, '{:,.0f}%', yticks=[i * 10 for i in range(11)])
+    draw_side_by_side_violin_plot(data, color, [1, 2, 3], title, x_title, y_title, path, '{:,.0f}%', yticks=[i * 10 for i in range(11)])
 
     graph_number += 1
