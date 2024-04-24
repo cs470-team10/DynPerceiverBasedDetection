@@ -386,7 +386,6 @@ class DynPerceiver(nn.Module):
         # y_early1 = self.early_classifier1(y_early1)
 
         x = self.cnn_body.block1(x)
-        outs.append(x)
 
         # between stage1 and stage2
         _, n_tokens, c_in = x_latent.shape
@@ -416,9 +415,8 @@ class DynPerceiver(nn.Module):
         x_latent = self.self_att2(x_latent)
         # y_early2 = torch.mean(x_latent, dim=1).squeeze(1)
         # y_early2 = self.early_classifier2(y_early2)
-
-        x = self.cnn_body.block2(x)
         outs.append(x)
+        x = self.cnn_body.block2(x)
 
         # between stage2 and stage3
         _, n_tokens, c_in = x_latent.shape
@@ -448,9 +446,8 @@ class DynPerceiver(nn.Module):
         x_latent = self.self_att3(x_latent)
         y_early3 = torch.mean(x_latent, dim=1).squeeze(1)
         y_early3 = self.early_classifier3(y_early3)
-
-        x = self.cnn_body.block3(x)
         outs.append(x)
+        x = self.cnn_body.block3(x)
 
         # between stage3 and stage4
         _, n_tokens, c_in = x_latent.shape
@@ -488,9 +485,8 @@ class DynPerceiver(nn.Module):
             y_att = self.classifier_att(y_att)
         else:
             y_att = self.classifier_att(x_latent_mean)
-
-        x = self.cnn_body.block4(x)
         outs.append(x)
+        x = self.cnn_body.block4(x)
 
         x_mean = self.avgpool(x)
         x_mean = x_mean.flatten(start_dim=1)
@@ -505,6 +501,7 @@ class DynPerceiver(nn.Module):
             x = rearrange(x, "b (h w) c -> b c h w", h=h, w=w)
             x_mean = self.avgpool(x)
             x_mean = x_mean.flatten(start_dim=1)
+        outs.append(x)
 
         if self.with_isc:
             y4_ = self.isc4(y_att)
