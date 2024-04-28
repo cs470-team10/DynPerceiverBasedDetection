@@ -19,7 +19,6 @@ def convert(src, dst):
     checkpoint['state_dict'] = state_dict
     torch.save(checkpoint, dst)
 
-
 def main():
     parser = argparse.ArgumentParser(description='Convert model keys')
     parser.add_argument('src', help='src detectron model path')
