@@ -9,7 +9,6 @@ class RegNetY800MF(BaseModule):
         cnn = regnet_y_800mf()
         self.cnn_stem = cnn.stem
         self.cnn_body = cnn.trunk_output
-        self.avgpool = cnn.avgpool
         if (init_cfg == None or init_cfg['type'] != 'Pretrained' or init_cfg['checkpoint'] == None or not isinstance(init_cfg['checkpoint'], str)):
             raise 'A pretrained model must be provided.'
         self._freeze_stages()

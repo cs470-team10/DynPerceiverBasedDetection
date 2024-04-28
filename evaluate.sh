@@ -54,19 +54,27 @@ python3 tools/cs470/analysis_log.py \
     --src ./work_dirs/retinanet_regnetx-800MF_fpn_1x_imageNet/20240410_065852/20240410_065852.log \
     --dest ./
 
-
+# Test 1
 nohup python3 tools/train.py \
     baselines/regnety_800mf_with_dyn_perceiver/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-t1.py \
     --auto-scale-lr > dyn_perceiver_finetune-t1.out &
 
+# Test 2
 nohup python3 tools/train.py \
     baselines/regnety_800mf_with_dyn_perceiver/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-t2.py \
     --auto-scale-lr > dyn_perceiver_finetune-t2.out &
 
+# Test 3
 nohup python3 tools/train.py \
     baselines/regnety_800mf_with_dyn_perceiver/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-t3.py \
     --auto-scale-lr > dyn_perceiver_finetune-t3.out &
 
+# Test 4
 nohup python3 tools/train.py \
     baselines/regnety_800mf_with_dyn_perceiver/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-t4.py \
     --auto-scale-lr > dyn_perceiver_finetune-t4.out &
+
+# RegNetY-800MF Based RetinaNet
+nohup python3 tools/train.py \
+    baselines/regnety_800mf_wo_dyn_perceiver/retinanet_regnety-800MF_fpn_1x_imageNet.py \
+    --auto-scale-lr > regnety-800mf_finetune.out &
