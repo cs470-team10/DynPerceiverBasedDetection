@@ -54,22 +54,26 @@ python3 tools/cs470/analysis_log.py \
     --src ./work_dirs/retinanet_regnetx-800MF_fpn_1x_imageNet/20240410_065852/20240410_065852.log \
     --dest ./
 
-# Test 1
+# Test 1 (cnn_stem과 cnn_body.block1 freeze)
 nohup python3 tools/train.py \
     baselines/regnety_800mf_with_dyn_perceiver/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-t1.py \
     --auto-scale-lr > dyn_perceiver_finetune-t1.out &
+# (바보같이 cnn_body.block1의 requires_grad를 안끄는 바람에 다시 돌립니다...)
+nohup python3 tools/train.py \
+    baselines/regnety_800mf_with_dyn_perceiver/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-t1-1.py \
+    --auto-scale-lr > dyn_perceiver_finetune-t1-1.out &
 
-# Test 2
+# Test 2 classification branch(x2z, z2x, self attention, token mixer, expander; ~ stage 1 범위)
 nohup python3 tools/train.py \
     baselines/regnety_800mf_with_dyn_perceiver/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-t2.py \
     --auto-scale-lr > dyn_perceiver_finetune-t2.out &
 
-# Test 3
+# Test 3 classification branch(x2z, z2x, self attention, token mixer, expander, latent; ~ stage 1 범위)
 nohup python3 tools/train.py \
     baselines/regnety_800mf_with_dyn_perceiver/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-t3.py \
     --auto-scale-lr > dyn_perceiver_finetune-t3.out &
 
-# Test 4
+# Test 4 classification branch(x2z, z2x, self attention, token mixer, expander, latent; 전체 범위)
 nohup python3 tools/train.py \
     baselines/regnety_800mf_with_dyn_perceiver/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-t4.py \
     --auto-scale-lr > dyn_perceiver_finetune-t4.out &
