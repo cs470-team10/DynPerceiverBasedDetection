@@ -4,17 +4,18 @@ from collections import OrderedDict
 
 import torch
 
+BACKBONE = ''
 
 def convert_stem(model_key, model_weight, state_dict, converted_names):
     new_key = model_key.replace('stem.conv', 'conv1')
-    new_key = new_key.replace('stem.bn', 'bn1')
+    new_key = BACKBONE + new_key.replace('stem.bn', 'bn1')
     state_dict[new_key] = model_weight
     converted_names.add(model_key)
     print(f'Convert {model_key} to {new_key}')
 
 
 def convert_head(model_key, model_weight, state_dict, converted_names):
-    new_key = model_key.replace('head.fc', 'fc')
+    new_key = BACKBONE + model_key.replace('head.fc', 'fc')
     state_dict[new_key] = model_weight
     converted_names.add(model_key)
     print(f'Convert {model_key} to {new_key}')
@@ -28,9 +29,9 @@ def convert_reslayer(model_key, model_weight, state_dict, converted_names):
     block_name = f'{block_id - 1}'
 
     if block_id == 1 and module == 'bn':
-        new_key = f'{layer_name}.{block_name}.downsample.1.{split_keys[-1]}'
+        new_key = BACKBONE + f'{layer_name}.{block_name}.downsample.1.{split_keys[-1]}'
     elif block_id == 1 and module == 'proj':
-        new_key = f'{layer_name}.{block_name}.downsample.0.{split_keys[-1]}'
+        new_key = BACKBONE + f'{layer_name}.{block_name}.downsample.0.{split_keys[-1]}'
     elif module == 'f':
         if split_keys[3] == 'a_bn':
             module_name = 'bn1'
@@ -44,7 +45,7 @@ def convert_reslayer(model_key, model_weight, state_dict, converted_names):
             module_name = 'conv2'
         elif split_keys[3] == 'c':
             module_name = 'conv3'
-        new_key = f'{layer_name}.{block_name}.{module_name}.{split_keys[-1]}'
+        new_key = BACKBONE + f'{layer_name}.{block_name}.{module_name}.{split_keys[-1]}'
     else:
         raise ValueError(f'Unsupported conversion of key {model_key}')
     print(f'Convert {model_key} to {new_key}')

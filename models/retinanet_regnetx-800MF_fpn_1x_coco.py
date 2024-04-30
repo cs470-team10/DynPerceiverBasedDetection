@@ -19,10 +19,10 @@ log_level = 'INFO'
 log_processor = dict(by_epoch=True, type='LogProcessor', window_size=50)
 model = dict(
     backbone=dict(
-        arch='regnetx_3.2gf',
+        arch='regnetx_800mf',
         frozen_stages=1,
         init_cfg=dict(
-            checkpoint='open-mmlab://regnetx_3.2gf', type='Pretrained'),
+            checkpoint='open-mmlab://regnetx_800mf', type='Pretrained'),
         norm_cfg=dict(requires_grad=True, type='BN'),
         norm_eval=True,
         out_indices=(
@@ -93,10 +93,10 @@ model = dict(
     neck=dict(
         add_extra_convs='on_input',
         in_channels=[
-            96,
-            192,
-            432,
-            1008,
+            64,
+            128,
+            288,
+            672,
         ],
         num_outs=5,
         out_channels=256,

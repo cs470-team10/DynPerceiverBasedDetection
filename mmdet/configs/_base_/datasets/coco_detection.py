@@ -102,3 +102,33 @@ test_evaluator = val_evaluator
 #     format_only=True,
 #     ann_file=data_root + 'annotations/image_info_test-dev2017.json',
 #     outfile_prefix='./work_dirs/coco_detection/test')
+
+import cv2
+import numpy as np
+
+# CocoDataset 인스턴스 생성
+dataset = CocoDataset(
+    ann_file='data/coco/annotations/instances_train2017.json',
+    img_prefix='data/coco/train2017/',
+    pipeline=[],  # 파이프라인은 이 경우에는 사용하지 않음
+)
+
+# 데이터 목록 로드
+data_list = dataset.load_data_list()
+
+# 첫 번째 데이터 정보 추출
+first_data_info = data_list[0]
+print("First data info:", first_data_info)
+
+# 이미지 경로 구성 및 이미지 로드
+img_path = first_data_info['img_path']
+image = cv2.imread(img_path)  # OpenCV를 사용하여 이미지 로드
+image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # BGR에서 RGB로 변환
+
+# 이미지 데이터 및 데이터 shape 출력
+print("Loaded image shape:", image.shape)
+
+# 이미지 데이터의 일부 출력 (예: 상위 왼쪽 2x2 픽셀)
+print("Image data (top-left 2x2 pixels):", image[:2, :2])
+
+

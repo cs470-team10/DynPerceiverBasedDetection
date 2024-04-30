@@ -9,6 +9,9 @@ from mmengine.runner import Runner
 
 from mmdet.utils import setup_cache_size_limit_of_dynamo
 
+from datetime import timedelta, datetime
+
+import wandb
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
@@ -58,17 +61,29 @@ def parse_args():
 
 
 def main():
+    start_time = datetime.now() + timedelta(hours=9)
+    print("[CS470] Start Time: " + format(start_time, '%Y.%m.%d %H:%M:%S') + " (KST)")
+
     args = parse_args()
 
     # Reduce the number of repeated compilations and improve
     # training speed.
     setup_cache_size_limit_of_dynamo()
 
-    # load config
+    # load config    
     cfg = Config.fromfile(args.config)
     cfg.launcher = args.launcher
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
+
+    wandb.init(
+    project='cs470',
+    entity='plasma3365',
+    # 구성 파일에서 중요한 설정을 딕셔너리로 추출하여 W&B에 전달할 수 있습니다.
+    config=dict(cfg),
+    name=f"Training Run - {start_time.strftime('%Y-%m-%d %H:%M:%S (KST)')}",
+    tags=['MMDetection', 'RegNet', 'RetinaNet']
+    )
 
     # work_dir is determined in this priority: CLI > segment in file > filename
     if args.work_dir is not None:
@@ -115,6 +130,10 @@ def main():
 
     # start training
     runner.train()
+
+    end_time = datetime.now() + timedelta(hours=9)
+    print("[CS470] End Time: " + format(end_time, '%Y.%m.%d %H:%M:%S') + " (KST)")
+    print("[CS470] Takes " + str(timedelta(seconds=(end_time - start_time).seconds)))
 
 
 if __name__ == '__main__':
