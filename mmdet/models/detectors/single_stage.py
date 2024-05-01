@@ -106,9 +106,13 @@ class SingleStageDetector(BaseDetector):
                 - bboxes (Tensor): Has a shape (num_instances, 4),
                     the last dimension 4 arrange as (x1, y1, x2, y2).
         """
+        print("Input:" + str(list(batch_inputs.size())))
         x = self.extract_feat(batch_inputs)
         results_list = self.bbox_head.predict(
             x, batch_data_samples, rescale=rescale)
+        print("Scores: " + str(list(results_list[0].scores.size())))
+        print("Bboxes: " + str(list(results_list[0].bboxes.size())))
+        print("Labels: " + str(list(results_list[0].labels.size())))
         batch_data_samples = self.add_pred_to_datasample(
             batch_data_samples, results_list)
         return batch_data_samples
@@ -144,6 +148,10 @@ class SingleStageDetector(BaseDetector):
             different resolutions.
         """
         x = self.backbone(batch_inputs)
+        for a in x:
+            print("Featuremap out: " + str(list(a.size())))
         if self.with_neck:
             x = self.neck(x)
+        for a in x:
+            print("neck out: " + str(list(a.size())))
         return x
