@@ -13,6 +13,10 @@ class RegNetY800MF(BaseModule):
             raise 'A pretrained model must be provided.'
         self._freeze_stages()
 
+    def train(self, mode=True):
+        self.train(True)
+        self._freeze_stages()
+
     def forward(self, x):
         outs = []
         x = self.cnn_stem(x)

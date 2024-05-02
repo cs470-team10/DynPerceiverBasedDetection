@@ -5,7 +5,7 @@ from mmengine.model import BaseModule
 
 @MODELS.register_module()
 class DynPerceiverBaseline(BaseModule):
-    def __init__(self, init_cfg, test_num, **args):
+    def __init__(self, init_cfg, test_num, dynamic_evaluate = False, **args):
         super(DynPerceiverBaseline, self).__init__(init_cfg)
         self.dyn_perceiver = DynPerceiver(
             num_latents=128,
@@ -23,13 +23,17 @@ class DynPerceiverBaseline(BaseModule):
         self.test_num = test_num
         self._freeze_stages()
 
+    def train(self, mode=True):
+        self.dyn_perceiver.train(mode)
+        self._freeze_stages()
+
     def forward(self, x):
-        _y_early3, _y_att, _y_cnn, _y_merge, outs = self.dyn_perceiver.forward(x)
+        y_early3, y_att, y_cnn, y_merge, outs = self.dyn_perceiver.forward(x)
         # torch.Size([2, 64, 200, 304])
         # torch.Size([2, 144, 100, 152])
         # torch.Size([2, 320, 50, 76])
         # torch.Size([2, 784, 25, 38])
-        return outs
+        return outs, y_early3, y_att, y_cnn, y_merge
     
     def _freeze_stages(self):
         # freeze stages
