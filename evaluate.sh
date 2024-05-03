@@ -63,10 +63,20 @@ nohup python3 tools/train.py \
     baselines/regnety_800mf_with_dyn_perceiver/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-t1-1.py \
     --auto-scale-lr > dyn_perceiver_finetune-t1-1.out &
 
+# (freeze가 잘 안된 것 같아서 다시 돌립니다.)
+nohup python3 tools/train.py \
+    baselines/regnety_800mf_with_dyn_perceiver/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-t1-2.py \
+    --auto-scale-lr > dyn_perceiver_finetune-t1-2.out &
+
 # Test 2 classification branch(x2z, z2x, self attention, token mixer, expander; ~ stage 1 범위)
 nohup python3 tools/train.py \
     baselines/regnety_800mf_with_dyn_perceiver/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-t2.py \
     --auto-scale-lr > dyn_perceiver_finetune-t2.out &
+
+# (freeze가 잘 안된 것 같아서 다시 돌립니다.)
+nohup python3 tools/train.py \
+    baselines/regnety_800mf_with_dyn_perceiver/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-t2-1.py \
+    --auto-scale-lr > dyn_perceiver_finetune-t2-1.out &
 
 # Test 3 classification branch(x2z, z2x, self attention, token mixer, expander, latent; ~ stage 1 범위)
 nohup python3 tools/train.py \
@@ -80,5 +90,5 @@ nohup python3 tools/train.py \
 
 # RegNetY-800MF Based RetinaNet
 nohup python3 tools/train.py \
-    baselines/regnety_800mf_wo_dyn_perceiver/retinanet_regnety-800MF_fpn_1x_imageNet.py \
-    --auto-scale-lr > regnety-800mf_finetune.out &
+    baselines/regnety_800mf_wo_dyn_perceiver/retinanet_regnety-800MF_fpn_1x_imageNet-2.py \
+    --auto-scale-lr > regnety-800mf_finetune-2.out &

@@ -14,7 +14,8 @@ class RegNetY800MF(BaseModule):
         self._freeze_stages()
 
     def train(self, mode=True):
-        self.train(True)
+        self.cnn_stem.train(mode=mode)
+        self.cnn_body.train(mode=mode)
         self._freeze_stages()
 
     def forward(self, x):
