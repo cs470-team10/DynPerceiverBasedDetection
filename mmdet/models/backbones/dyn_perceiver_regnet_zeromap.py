@@ -25,11 +25,14 @@ class DynPerceiverBaseline(BaseModule):
         self.threshold = None
 
     def forward(self, x):
-        y_early3, y_att, y_cnn, y_merge, outs = self.dyn_perceiver.forward(x)
+        y_early3, y_att, y_cnn, y_merge, outs = self.dyn_perceiver.forward(x, threshold=self.threshold)
         # torch.Size([2, 64, 200, 304])
         # torch.Size([2, 144, 100, 152])
         # torch.Size([2, 320, 50, 76])
         # torch.Size([2, 784, 25, 38])
+        # [CS470] 김남우, [CS470] 이찬규: [TODO] 여기서 classifiers의 output은 [Batch Size, 80(COCO의 # of classes)]로 바뀌어야 합니다.
+        # 그래야 정완님이 threshold 비교할 때 사용할 수 있습니다.
+        # 남우님이랑 찬규님 중에 누가 할지 몰라서 일단 두 분 다 적었습니다.
         return outs, y_early3, y_att, y_cnn, y_merge
     
     def set_threshold(self, threshold):
@@ -41,7 +44,7 @@ class DynPerceiverBaseline(BaseModule):
     def train(self, mode=True):
         self.dyn_perceiver.train(mode)
         self._freeze_stages()
-
+    
     def _freeze_stages(self):
         # freeze stages
         test_num = self.test_num

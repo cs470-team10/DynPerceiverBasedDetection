@@ -63,11 +63,11 @@ class RetinaHead(AnchorHead):
 
     def _init_layers(self):
         """Initialize layers of the head."""
-        self.relu = nn.ReLU(inplace=True)
-        self.cls_convs = nn.ModuleList()
+        self.relu = nn.ReLU(inplace=True) # creates a ReLU activation layer
+        self.cls_convs = nn.ModuleList()  
         self.reg_convs = nn.ModuleList()
         in_channels = self.in_channels
-        for i in range(self.stacked_convs):
+        for i in range(self.stacked_convs): # i range 4
             self.cls_convs.append(
                 ConvModule(
                     in_channels,
@@ -109,7 +109,7 @@ class RetinaHead(AnchorHead):
                 bbox_pred (Tensor): Box energies / deltas for a single scale
                     level, the channels number is num_anchors * 4.
         """
-        print("RetinaHead input: " + str(list(x.size())))
+        # print("RetinaHead input: " + str(list(x.size())))
         cls_feat = x
         reg_feat = x
         for cls_conv in self.cls_convs:
@@ -118,6 +118,6 @@ class RetinaHead(AnchorHead):
             reg_feat = reg_conv(reg_feat)
         cls_score = self.retina_cls(cls_feat)
         bbox_pred = self.retina_reg(reg_feat)
-        print("cls_score: " + str(list(cls_score.size())))
-        print("bbox_pred: " + str(list(bbox_pred.size())))
+        # print("cls_score: " + str(list(cls_score.size())))
+        # print("bbox_pred: " + str(list(bbox_pred.size())))
         return cls_score, bbox_pred

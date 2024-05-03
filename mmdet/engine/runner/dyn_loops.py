@@ -35,7 +35,7 @@ class DynamicValLoop(ValLoop):
         self.runner.model.eval()
         if self.dynamic_evaluate:
             # [CS470] 강우성: 아래의 함수에서 threshold 계산해서 연결해줌. 딱히 건들 필요는 ㄴㄴ
-            self.get_threshold()
+            self.get_threshold_and_flops()
             # [CS470] 이정완: [TODO] 여기서 threshold별 mAP 구해야합니다. run_ter 참조.
             # 그리고 하나 구현해두면 TestLoop에서도 동일하니 복붙하시면 됩니다.
             for idx, data_batch in enumerate(self.dataloader):
@@ -56,11 +56,17 @@ class DynamicValLoop(ValLoop):
         return metrics
     
     @torch.no_grad()
-    def get_threshold(self):
+    def get_threshold_and_flops(self):
         # [CS470] 강우성: threshold는 아래의 method를 통해 DynRetinaNet에 전달.
-        thresholds = _get_threshold(self.runner.train_loop.dataloader, self.runner.model, self.fp16)
-        self.runner.model.set_thresholds(thresholds)
+        # [CS470] 이정완: flops는 early exiting stage별 flops를 계산한 결과가 전달됩니다.
+        self.thresholds = _get_threshold(self.runner.train_loop.dataloader, self.runner.model, self.fp16)
+        print("Thresholds: " + str(self.thresholds))
+        self.flops = self.runner.model.get_dynamic_flops()
+        print("Flops per early exiting stages: " + str(self.flops))
         return
+    
+    def set_threshold(self, threshold):
+        self.runner.model.set_threshold(threshold) # [CS470] 이정완: 모델에 threshold를 전달하는 법
 
     @torch.no_grad()
     def run_iter(self, idx, data_batch: Sequence[dict]):
@@ -69,6 +75,8 @@ class DynamicValLoop(ValLoop):
         # outputs should be sequence of BaseDataElement
         if self.dynamic_evaluate:
             with autocast(enabled=self.fp16):
+                # 모델에 threshold를 넣어주는 방법입니다.
+                self.set_threshold(self.thresholds[0])
                 outputs, y_early3, y_att, y_cnn, y_merge = self.runner.model.test_step(data_batch)
             self.evaluator.process(data_samples=outputs, data_batch=data_batch)
             self.runner.call_hook(
@@ -105,7 +113,7 @@ class DynamicTestLoop(TestLoop):
         self.runner.model.eval()
         if self.dynamic_evaluate:
             # [CS470] 강우성: 아래의 함수에서 threshold 계산해서 연결해줌. 딱히 건들 필요는 ㄴㄴ
-            self.get_threshold()
+            self.get_threshold_and_flops()
             # [CS470] 이정완: [TODO] 여기서 threshold별 mAP 구해야합니다. run_ter 참조.
             # 그리고 하나 구현해두면 ValLoop에서도 동일하니 복붙하시면 됩니다.
             for idx, data_batch in enumerate(self.dataloader):
@@ -126,11 +134,17 @@ class DynamicTestLoop(TestLoop):
         return metrics
     
     @torch.no_grad()
-    def get_threshold(self):
+    def get_threshold_and_flops(self):
         # [CS470] 강우성: threshold는 아래의 method를 통해 DynRetinaNet에 전달.
-        thresholds = _get_threshold(self.runner.train_loop.dataloader, self.runner.model, self.fp16)
-        self.runner.model.set_thresholds(thresholds)
+        # [CS470] 이정완: flops는 early exiting stage별 flops를 계산한 결과가 전달됩니다.
+        self.thresholds = _get_threshold(self.runner.train_loop.dataloader, self.runner.model, self.fp16)
+        print("Thresholds: " + str(self.thresholds))
+        self.flops = self.runner.model.get_dynamic_flops()
+        print("Flops per early exiting stages: " + str(self.flops))
         return
+    
+    def set_threshold(self, threshold):
+        self.runner.model.set_threshold(threshold) # [CS470] 이정완: 모델에 threshold를 전달하는 법
 
     @torch.no_grad()
     def run_iter(self, idx, data_batch: Sequence[dict]):
@@ -139,6 +153,8 @@ class DynamicTestLoop(TestLoop):
 
         if self.dynamic_evaluate:
             with autocast(enabled=self.fp16):
+                # 모델에 threshold를 넣어주는 방법입니다.
+                self.set_threshold(self.thresholds[0])
                 outputs, y_early3, y_att, y_cnn, y_merge = self.runner.model.test_step(data_batch)
             self.evaluator.process(data_samples=outputs, data_batch=data_batch)
             self.runner.call_hook(
