@@ -4,9 +4,9 @@ from mmdet.registry import MODELS
 from mmengine.model import BaseModule
 
 @MODELS.register_module()
-class DynPerceiverBaseline(BaseModule):
+class DynPerceiverZeromap(BaseModule):
     def __init__(self, init_cfg, test_num, **args):
-        super(DynPerceiverBaseline, self).__init__(init_cfg)
+        super(DynPerceiverZeromap, self).__init__(init_cfg)
         self.dyn_perceiver = DynPerceiver(
             num_latents=128,
             cnn_arch='regnet_y_800mf',
