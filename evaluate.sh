@@ -92,11 +92,3 @@ nohup python3 tools/train.py \
 nohup python3 tools/train.py \
     baselines/regnety_800mf_wo_dyn_perceiver/retinanet_regnety-800MF_fpn_1x_imageNet-2.py \
     --auto-scale-lr > regnety-800mf_finetune-2.out &
-
-nohup python3 tools/train.py \
-    baselines/regnety_800mf_wo_dyn_perceiver/retinanet_regnety-800MF_fpn_1x_imageNet-test.py \
-    --auto-scale-lr > regnety-800mf_finetune-test.out &
-
-nohup python3 tools/train.py \
-    baselines/regnety_800mf_with_dyn_perceiver/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-test.py \
-    --auto-scale-lr > dyn_perceiver_finetune-test.out &
