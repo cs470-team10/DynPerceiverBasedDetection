@@ -339,7 +339,8 @@ class DynPerceiver(nn.Module):
         """
         x = torch.rand(2,3,1333,800)
         self.forward_calc_flops(x)
-        
+
+        self.softmax = nn.Softmax(dim=1).cuda()
 
     def _init_parameters(self):
         """
@@ -348,7 +349,7 @@ class DynPerceiver(nn.Module):
         with torch.no_grad():
             self.latent.normal_(0.0, 0.02).clamp_(-2.0, 2.0)
 
-    def forward(self, x, pad_mask=None):
+    def forward(self, x, pad_mask=None, threshold=None):
         """_summary_
         forward 연산을 수행.
 
@@ -510,6 +511,30 @@ class DynPerceiver(nn.Module):
         else:
             x_merge = torch.cat((x_mean, x_latent_mean), dim=1)
             y_merge = self.classifier_merge(x_merge)
+
+        logits = [[] for _ in range(4)]
+        if threshold is not None:
+            output = [y_early3, y_att, y_cnn, y_merge]
+            for b in range(4):
+                _t = self.softmax(output[b])
+                logits[b].append(_t)
+
+            for b in range(4):
+                logits[b] = torch.cat(logits[b], dim=0)
+
+            size = (4, logits[0].size(0), logits[0].size(1))
+            ts_logits = torch.Tensor().resize_(size).zero_()
+            for b in range(4):
+                ts_logits[b].copy_(logits[b])
+            
+            n_stage, n_sample, _ =  ts_logits.size()
+            max_preds, _ = ts_logits.max(dim=2, keepdim=False)
+
+            for i in range(n_sample):
+                for k in range(n_stage):
+                    if max_preds[k][i].item() >= threshold[k]:
+                        for j in range(k+1, n_stage):
+                            outs[j][i].zero_()
 
         return y_early3, y_att, y_cnn, y_merge, outs
 
