@@ -2,6 +2,7 @@ from dyn_perceiver.dyn_perceiver_regnet_model import DynPerceiver
 import torch.nn as nn
 from mmdet.registry import MODELS
 from mmengine.model import BaseModule
+from torch import Tensor
 
 @MODELS.register_module()
 class DynPerceiverZeromap(BaseModule):
@@ -33,6 +34,43 @@ class DynPerceiverZeromap(BaseModule):
         # [CS470] 김남우, [CS470] 이찬규: [TODO] 여기서 classifiers의 output은 [Batch Size, 80(COCO의 # of classes)]로 바뀌어야 합니다.
         # 그래야 정완님이 threshold 비교할 때 사용할 수 있습니다.
         # 남우님이랑 찬규님 중에 누가 할지 몰라서 일단 두 분 다 적었습니다.
+
+        # Warning) mapping에 의해서 dyn-perceiver train 시 back propagation에서 문제가 될수 있음.
+        # 현재는 1000->42 mapping이므로 불완전함.
+        # 따라서 현재의 output은 [Batch size, 42] 형태임.
+        """
+        mapping_file_path = "../../../tools/dataset_converters/imagenet2coco.txt"
+
+        mapping = {}
+        coco_index = {}
+        coco_counter = 0
+
+        with open(mapping_file_path, 'r') as file:
+            i=0
+            for line in file:
+                parts = line.strip().split('\t')
+                if len(parts) ==3:
+                    imagenet_id, imagenet_label, coco_label = parts
+                    if coco_label != 'None':
+                        if coco_label not in coco_index:
+                            coco_index[coco_label] = coco_counter
+                            coco_counter += 1
+                        mapping[i] = coco_index[coco_label]
+                i += 1
+
+        print("# of mapped COCO labels :", coco_counter)
+
+        batch_size = y_early3.size(0)
+        coco_y = []
+        for each_y in [y_early3, y_att, y_cnn, y_merge]:
+            y_coco = tensor.zeros(batch_size, coco_counter, dtype=each_y.dtype, device=each_y.device)
+            for imagenet_idx, coco_index in mapping.items():
+                y_coco[:, coco_index] += each_y[:, imagenet_idx]
+            coco_y.append(y_coco)
+        
+        return outs, coco_y[0], coco_y[1], coco_y[2], coco_y[3]
+        """
+        
         return outs, y_early3, y_att, y_cnn, y_merge
     
     def set_threshold(self, threshold):
