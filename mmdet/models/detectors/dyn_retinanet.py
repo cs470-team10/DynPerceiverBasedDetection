@@ -33,6 +33,8 @@ class DynRetinaNet(SingleStageDetector):
             data_preprocessor=data_preprocessor,
             init_cfg=init_cfg)
         self.dynamic_evaluate = dynamic_evaluate
+        #threshold별 결과를 저장하기 위한 곳
+        self.metrics = []
 
     # [CS470] 강우성: 너가 찾아둔 thresholds는 여기로 들어가서 정완님이 사용
     # [CS470] 이정완: 우성이 것 참고하시면 됩니다.
@@ -53,6 +55,11 @@ class DynRetinaNet(SingleStageDetector):
             # [CS470] 이정완: [TODO] 여기 보면 x가 fpn의 featuremap result고, 뒤에 4개는 dynamic perceiver의 classifier의 값입니다.(아마 남우님이 뽑아주신 값이 나오지 않을까 싶습니다. [B, 80]?)
             # 여기서 threshold랑 잘 비교해서 fpn의 output을 잘 0으로 패딩한 후에 bbox_head.predict에 넣어주면 됩니다.
             # Threshold 구하는법: self.threshold에 있습니다. 근데 어떤 데이터구조로 받을지는 우성이랑 정하면 될 듯 합니다.
+            """
+            Q. Early exit을 하면 feauture map을 0으로 만들어줘야하는 것은 early exit을 했기 떄문이라는 근거가 있는데,
+               FPN의 output도 0으로 만들어줘야한다는 명분이 좀 부족하다는 생각이 문득 들었습니다. 같이 얘기해보면 좋을
+               것 같습니다.
+            """
             x, y_early3, y_att, y_cnn, y_merge = self.extract_feat(batch_inputs, False)
 
             results_list = self.bbox_head.predict(
