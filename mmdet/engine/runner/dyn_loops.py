@@ -82,9 +82,9 @@ class DynamicValLoop(ValLoop):
         self.runner.call_hook(
             'before_val_iter', batch_idx=idx, data_batch=data_batch)
         # outputs should be sequence of BaseDataElement
-        print("Check argument :", self.dynamic_evaluate)
+        #print("Check argument(Val loop):", self.dynamic_evaluate)
         if self.dynamic_evaluate:
-            print("in")
+            #print("val loop dyn eval in")
             with autocast(enabled=self.fp16):
                 # 모델에 threshold를 넣어주는 방법입니다.
                 self.set_threshold(self.thresholds[index])
@@ -150,7 +150,7 @@ class DynamicTestLoop(TestLoop):
     def get_threshold_and_flops(self):
         # [CS470] 강우성: threshold는 아래의 method를 통해 DynRetinaNet에 전달.
         # [CS470] 이정완: flops는 early exiting stage별 flops를 계산한 결과가 전달됩니다.
-        self.thresholds = _get_threshold()
+        self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.fp16) #self.runner.train_loop.dataloader
         print("Thresholds: " + str(self.thresholds))
         self.flops = self.runner.model.get_dynamic_flops()
         print("Flops per early exiting stages: " + str(self.flops))
@@ -163,7 +163,6 @@ class DynamicTestLoop(TestLoop):
     def run_iter(self, index, idx, data_batch: Sequence[dict]):
         self.runner.call_hook(
             'before_test_iter', batch_idx=idx, data_batch=data_batch)
-
         if self.dynamic_evaluate:
             with autocast(enabled=self.fp16):
                 # 모델에 threshold를 넣어주는 방법입니다.

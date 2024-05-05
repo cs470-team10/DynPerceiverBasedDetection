@@ -3,12 +3,19 @@ from typing import Tuple
 from mmengine.runner.amp import autocast
 from torch import Tensor
 import torch
+import torch.nn as nn
+import os
+import math
+import numpy as np
+from mmdet.structures import DetDataSample
+from mmdet.structures.bbox import HorizontalBoxes
+from mmdet.testing import demo_mm_inputs, get_detector_cfg
 
 # train_dataloader: COCO Trainset의 dataloader
 # model: DynRetinaNet 모델
 # fp16: 신경 안써도 됨. autocast만 켜고 하셈.
 
-def get_threshold(each_exit = False) -> Tensor:
+def generate_distribution(each_exit = False) -> Tensor:
     # [CS470] 강우성: [TODO] train_dataloader랑 model(DynRetinaNet 참고) 보면서 threshold 구하는 method 만들기.
     probs_list = []
     if each_exit:
@@ -31,3 +38,126 @@ def get_threshold(each_exit = False) -> Tensor:
                 probs[j+1:4] = (1 - probs[0:j+1].sum()) * probs[j+1:4] / probs[j+1:4].sum()
             probs_list.append(probs)
     return probs_list # size : 34 * 4
+
+def get_threshold(model, val_loader, fp16: bool):
+    with autocast(enabled=fp16):
+        #val_loader.batch_size = 128
+        tester = Tester(model)
+        
+        val_pred, val_target = tester.calc_logit(val_loader, early_break = True)
+        
+        probs_list = generate_distribution()
+        
+        return_list = []
+        for probs in probs_list:
+            print('\n*****************')
+            print(probs)
+            acc_val, T = tester.dynamic_eval_find_threshold(val_pred, val_target, probs)
+            return_list.append(T)
+            print(T)
+            print('valid acc: {:.3f}'.format(acc_val))
+        
+    print('----------ALL DONE-----------')
+    print("Threshold list(get_threshold.py) :", return_list)
+    return return_list
+
+class Tester(object):
+    def __init__(self, model):
+        # self.args = args
+        self.model = model
+        self.softmax = nn.Softmax(dim=1).cuda()
+
+    def calc_logit(self, dataloader, early_break=False):
+        
+        self.model.backbone.eval()
+        self.model.cuda()
+        n_stage = 4
+        logits = [[] for _ in range(n_stage)]
+        targets = []
+        for idx, sample in enumerate(dataloader):
+            if early_break and idx > 25000:
+                break
+            target = sample['data_samples']
+            tmp_labels = []
+            for t in target:
+                meta_info = t.gt_instances.bboxes
+                bboxes = meta_info.tensor.tolist()
+                labels = t.gt_instances.labels.tolist()
+                max_area = 0
+                max_idx = 0
+                for i, [x,y,w,h] in enumerate(bboxes):
+                    if max_area < w*h:
+                        max_area = w*h
+                        max_idx = i
+                tmp_labels.append(labels[max_idx])
+            targets.append(torch.tensor(tmp_labels))
+            
+            packed_inputs = demo_mm_inputs(2, [[3, 128, 128], [3, 125, 130]])
+            data = self.model.data_preprocessor(packed_inputs, False)
+            input = data['inputs']
+        
+            input = input.cuda()
+            with torch.no_grad():
+                _x, y_early3, y_att, y_cnn, y_merge = self.model.backbone(input)
+                output = [y_early3, y_att, y_cnn, y_merge]
+                for b in range(n_stage):
+                    _t = self.softmax(output[b])
+
+                    logits[b].append(_t)
+                    
+            if idx % 1000 == 0:
+                print('Generate Logit: [{0}/{1}]'.format(idx, len(dataloader)))
+        
+        for b in range(n_stage):
+            logits[b] = torch.cat(logits[b], dim=0)
+
+        size = (n_stage, logits[0].size(0), logits[0].size(1))
+        ts_logits = torch.Tensor().resize_(size).zero_()
+        for b in range(n_stage):
+            ts_logits[b].copy_(logits[b])
+
+        targets = torch.cat(targets, dim=0)
+        ts_targets = torch.Tensor().resize_(size[1]).copy_(targets)
+
+        return ts_logits, ts_targets
+
+    def dynamic_eval_find_threshold(self, logits, targets, p):
+        n_stage, n_sample, c = logits.size()
+        max_preds, argmax_preds = logits.max(dim=2, keepdim=False)
+
+        _, sorted_idx = max_preds.sort(dim=1, descending=True)
+
+        filtered = torch.zeros(n_sample)
+
+        T = torch.Tensor(n_stage).fill_(1e8)
+
+        for k in range(n_stage - 1):
+            acc, count = 0.0, 0
+            out_n = math.floor(n_sample * p[k])
+            for i in range(n_sample):
+                ori_idx = sorted_idx[k][i]
+                if filtered[ori_idx] == 0:
+                    count += 1
+                    if count == out_n:
+                        T[k] = max_preds[k][ori_idx]
+                        break
+            filtered.add_(max_preds[k].ge(T[k]).type_as(filtered))
+
+        T[n_stage -1] = -1e8 # accept all of the samples at the last stage
+
+        acc_rec, exp = torch.zeros(n_stage), torch.zeros(n_stage) # 각 stage에서 correctly classified된 sample수와 총 검사한 sample 수
+        acc = 0 # 전체 system의 accuracy와 FLOPs
+        for i in range(n_sample):
+            gold_label = targets[i]
+            for k in range(n_stage):
+                if max_preds[k][i].item() >= T[k]: # force the sample to exit at k
+                    if int(gold_label.item()) == int(argmax_preds[k][i].item()):
+                        acc += 1
+                        acc_rec[k] += 1
+                    exp[k] += 1
+                    break
+        acc_all = 0
+        for k in range(n_stage):
+            acc_all += acc_rec[k]
+
+        return acc * 100.0 / n_sample, T
