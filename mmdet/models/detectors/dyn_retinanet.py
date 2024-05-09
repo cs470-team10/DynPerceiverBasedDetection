@@ -12,6 +12,14 @@ from mmdet.registry import MODELS
 from mmdet.structures import OptSampleList, SampleList
 from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
 
+from mmengine.logging import MMLogger
+from mmengine.runner import Runner
+from mmengine.utils import digit_version#, DictAction
+from mmengine.config import Config
+from mmdet.structures import SampleList
+from mmengine.analysis import get_model_complexity_info
+from mmengine.analysis.print_helper import _format_size
+import numpy as np
 
 @MODELS.register_module()
 class DynRetinaNet(SingleStageDetector):
@@ -33,6 +41,7 @@ class DynRetinaNet(SingleStageDetector):
             data_preprocessor=data_preprocessor,
             init_cfg=init_cfg)
         self.dynamic_evaluate = dynamic_evaluate
+        self.logger = MMLogger.get_instance(name='MMLogger')
         #threshold별 결과를 저장하기 위한 곳
         self.metrics = []
 
@@ -139,9 +148,8 @@ class DynRetinaNet(SingleStageDetector):
             return x
         else:
             return x, y_early3, y_att, y_cnn, y_merge
-        
-
-    def get_dynamic_flops(self):
+    
+    def get_dynamic_flops(self, num_images=100):
         # [CS470] 김남우, [CS470] 이찬규: [TODO]
         # 이건 뭐 별거는 아닌데, 우린 결국 flops별 accuarcy를 비교하는 것이니까
         # 이에 대한 내장 함수 하나 있어도 좋을 것 같다는 생각이 들어 일단 파놨습니다.
@@ -149,4 +157,40 @@ class DynRetinaNet(SingleStageDetector):
         # 좋지 않을까요?
         # 
         # tools/analysis_tools/get_flops.py 참고해서 작성하면 좋을 듯 합니다.
-        return torch.tensor([1,2,3])
+        # Threshold 넣는법: self.backbone.set_threshold(원하는 threshold(Torch.tensor ([-1, 0 , 0 , 0])))
+        # 다 쓰고 return 하시기 전에 꼭 self.backbone.unset_threshold()
+        thresholds = [
+            [-1, 10, 10, 10],
+            [10, -1, 10, 10],
+            [10, 10, -1, 10],
+            [10, 10, 10, 10]
+        ]
+        flops_list = []
+        self.eval()
+        data_loader = Runner.build_dataloader(self.cfg.val_dataloader)
+
+        for threshold in thresholds:
+            self.set_threshold(threshold)
+            avg_flops = []
+            for idx, data_batch in enumerate(data_loader):
+                if idx == num_images:
+                    break
+                data = self.data_preprocessor(data_batch)
+                result = {'ori_shape': data['data_samples'][0].ori_shape,
+                          'pad_shape': data['data_samples'][0].pad_shape}
+                if hasattr(data['data_samples'][0], 'batch_input_shape'):
+                    result['pad_shape'] = data['data_samples'][0].batch_input_shape
+                
+                outputs = get_model_complexity_info(
+                    self,
+                    None,
+                    inputs=data['inputs'],
+                    show_table=False,
+                    show_arch=False)
+                avg_flops.append(outputs['flops'])
+
+            mean_flops = int(np.average(avg_flops))
+            flops_list.append(mean_flops)
+
+        return torch.tensor(flops_list)
+    
