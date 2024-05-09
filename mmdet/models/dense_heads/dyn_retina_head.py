@@ -172,5 +172,5 @@ class DynRetinaHead(AnchorHead):
             bbox_targets_list,
             bbox_weights_list,
             avg_factor=avg_factor)
-        loss_earlyexit = None # 여기에 넣어주면 될듯.
+        loss_earlyexit = None # 여기에 넣어주면 될듯. classifier 4개 있는 거 가지고 dynPerceiver에서 loss 계산하는 코드를 가져와서 loss float 값.
         return dict(loss_cls=losses_cls, loss_bbox=losses_bbox, loss_earlyexit=loss_earlyexit)

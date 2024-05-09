@@ -8,14 +8,14 @@ from mmengine.evaluator import Evaluator
 from mmdet.registry import LOOPS
 
 from dyn_perceiver.get_threshold import get_threshold as _get_threshold
+import torch
+from torch import Tensor
 
 # [CS470] 강우성, [CS470] 이정완: 아까 저희가 봤던 Loop을 수정한 버전입니다. Dynamic Evaluation은 여기서 일어난다고 생각하시면 될 것 같습니다.
 # Early Exiting을 위해서는 classifier의 결과가 필요한데, 이를 위해서 DynRetinaNet이라는 구조가 추가되었습니다.
 # 변경된 점은 DynPerceiver 내의 classifier를 output까지 가져오는 것 하나입니다.
 # 물론 이 작업은 training 때는 돌아가지 않고, evaluate 파트에서만 돌아갑니다.
 # 지금 보면 ValLoop랑 TestLoop 2개 있는데, 사실상 동일한 코드라 여기서 변경할 점이 있다면 하나 작업한 후에 복붙하시면 될 듯 합니다.
-
-import torch
 
 @LOOPS.register_module()
 class DynamicValLoop(ValLoop):
@@ -186,3 +186,11 @@ class DynamicTestLoop(TestLoop):
                 batch_idx=idx,
                 data_batch=data_batch,
                 outputs=outputs)
+            
+
+def get_label_list(data_batch: Sequence[dict]) -> Tensor:
+    labels = []
+    
+    for t in data_batch['data_samples']:
+        labels.append(t.gt_instances.labels.tolist()[0])
+    return torch.tensor(labels)
