@@ -58,7 +58,7 @@ def get_threshold(model, val_loader, fp16: bool):
             print('valid acc: {:.3f}'.format(acc_val))
         
     print('----------ALL DONE-----------')
-    print("Threshold list(get_threshold.py) :", return_list)
+    #print("Threshold list(get_threshold.py) :", return_list)
     return return_list
 
 class Tester(object):
@@ -74,28 +74,25 @@ class Tester(object):
         n_stage = 4
         logits = [[] for _ in range(n_stage)]
         targets = []
+        
         for idx, sample in enumerate(dataloader):
-            if early_break and idx > 25000:
+            if early_break and idx > 5000:
                 break
+            
             target = sample['data_samples']
+            
             tmp_labels = []
+            
             for t in target:
-                meta_info = t.gt_instances.bboxes
-                bboxes = meta_info.tensor.tolist()
                 labels = t.gt_instances.labels.tolist()
-                max_area = 0
-                max_idx = 0
-                for i, [x,y,w,h] in enumerate(bboxes):
-                    if max_area < w*h:
-                        max_area = w*h
-                        max_idx = i
-                tmp_labels.append(labels[max_idx])
+                tmp_labels.append(labels[0])
+            
             targets.append(torch.tensor(tmp_labels))
             
             packed_inputs = demo_mm_inputs(2, [[3, 128, 128], [3, 125, 130]])
             data = self.model.data_preprocessor(packed_inputs, False)
             input = data['inputs']
-        
+
             input = input.cuda()
             with torch.no_grad():
                 _x, y_early3, y_att, y_cnn, y_merge = self.model.backbone(input)
