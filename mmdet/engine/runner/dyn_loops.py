@@ -56,7 +56,7 @@ class DynamicValLoop(ValLoop):
             print(self.runner.model.metrics)
         else:
             for idx, data_batch in enumerate(self.dataloader):
-                self.run_iter(idx, data_batch)
+                self.run_iter(-1, idx, data_batch)
 
             # compute metrics
             metrics = self.evaluator.evaluate(len(self.dataloader.dataset))
@@ -129,6 +129,7 @@ class DynamicTestLoop(TestLoop):
             # [CS470] 이정완: [TODO] 여기서 threshold별 mAP 구해야합니다. run_ter 참조.
             # 그리고 하나 구현해두면 ValLoop에서도 동일하니 복붙하시면 됩니다.
             for index, tensor in enumerate(self.thresholds):
+                print("Thresholds for output: " + str(self.thresholds[index]))
                 for idx, data_batch in enumerate(self.dataloader):
                     self.run_iter(index, idx, data_batch)
                 metrics = self.evaluator.evaluate(len(self.dataloader.dataset))
@@ -138,7 +139,7 @@ class DynamicTestLoop(TestLoop):
             self.runner.call_hook('after_test')
         else:
             for idx, data_batch in enumerate(self.dataloader):
-                self.run_iter(idx, data_batch)
+                self.run_iter(-1, idx, data_batch)
 
             metrics = self.evaluator.evaluate(len(self.dataloader.dataset))
             print("finish")
@@ -167,7 +168,7 @@ class DynamicTestLoop(TestLoop):
             with autocast(enabled=self.fp16):
                 # 모델에 threshold를 넣어주는 방법입니다.
                 self.set_threshold(self.thresholds[index])
-                print("Thresholds for output: " + str(self.thresholds[index]))
+                #print("Thresholds for output: " + str(self.thresholds[index]))
                 outputs, y_early3, y_att, y_cnn, y_merge = self.runner.model.test_step(data_batch)
             self.evaluator.process(data_samples=outputs, data_batch=data_batch)
             self.runner.call_hook(
@@ -185,4 +186,3 @@ class DynamicTestLoop(TestLoop):
                 batch_idx=idx,
                 data_batch=data_batch,
                 outputs=outputs)
-
