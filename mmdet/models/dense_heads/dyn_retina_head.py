@@ -7,7 +7,7 @@ from .anchor_head import AnchorHead
 from torch import Tensor
 
 from mmdet.structures.bbox import cat_boxes
-from mmdet.utils import (InstanceList, OptInstanceList)
+from mmdet.utils import (InstanceList, OptInstanceList, ConfigType)
 
 from ..utils import images_to_levels, multi_apply
 from typing import List
@@ -54,13 +54,19 @@ class DynRetinaHead(AnchorHead):
                          name='retina_cls',
                          std=0.01,
                          bias_prob=0.01)),
-                 **kwargs):
+                loss_dyn: ConfigType = None,
+                 **kwargs
+                 ):
         assert stacked_convs >= 0, \
             '`stacked_convs` must be non-negative integers, ' \
             f'but got {stacked_convs} instead.'
         self.stacked_convs = stacked_convs
         self.conv_cfg = conv_cfg
         self.norm_cfg = norm_cfg
+        if loss_dyn is not None:
+            self.loss_dyn = MODELS.build(loss_dyn)
+        else:
+            self.loss_dyn = None
         super(DynRetinaHead, self).__init__(
             num_classes,
             in_channels,
@@ -172,5 +178,12 @@ class DynRetinaHead(AnchorHead):
             bbox_targets_list,
             bbox_weights_list,
             avg_factor=avg_factor)
-        loss_earlyexit = None # 여기에 넣어주면 될듯. classifier 4개 있는 거 가지고 dynPerceiver에서 loss 계산하는 코드를 가져와서 loss float 값.
-        return dict(loss_cls=losses_cls, loss_bbox=losses_bbox, loss_earlyexit=loss_earlyexit)
+        if self.loss_dyn is None:
+            return dict(loss_cls=losses_cls, loss_bbox=losses_bbox)
+        else:
+            loss_earlyexit = self.loss_dyn(self.earlyexit_pred, self.earlyexit_target)
+            return dict(loss_cls=losses_cls, loss_bbox=losses_bbox, loss_earlyexit=loss_earlyexit)
+        
+    def set_loss_earlyexit(self, pred, target):
+        self.earlyexit_pred = pred
+        self.earlyexit_target = target

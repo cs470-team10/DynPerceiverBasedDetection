@@ -37,28 +37,21 @@ class DynamicValLoop(ValLoop):
             # [CS470] 강우성: 아래의 함수에서 threshold 계산해서 연결해줌. 딱히 건들 필요는 ㄴㄴ
             self.get_threshold_and_flops()
             # [CS470] 이정완: [TODO] 여기서 threshold별 mAP 구해야합니다. run_ter 참조.
-            # 그리고 하나 구현해두면 TestLoop에서도 동일하니 복붙하시면 됩니다.
-            """
-            원래 이 함수가 하나의 threshold에 대해서 하나의 metrics 결과를 리턴하고 그것 바탕으로
-            wandb logger가 map 측정해서 그래프 작성하는 것 같은데, 각 threshold별로 map를 측정해서
-            한번에 리턴하게 되면 wandb logger의 input dim에서 오류가 발생할 것 같아서 우선 각 threshold
-            별로 evaluate까지 한 metrics 결과를 dyn_retinanet에 metrics라는 리스트에 append하는 식으로
-            코드를 작성해봤습니다
-            """
-            for index, tensor in enumerate(self.thresholds):
+            # 그리고 하나 구현해두면 ValLoop에서도 동일하니 복붙하시면 됩니다.
+            for _index, threshold in enumerate(self.thresholds):
+                print("Thresholds for output: " + str(threshold))
+                self.set_threshold(threshold)
                 for idx, data_batch in enumerate(self.dataloader):
-                    self.run_iter(index, idx, data_batch)
+                    self.run_iter(idx, data_batch)
+                self.unset_threshold()
                 metrics = self.evaluator.evaluate(len(self.dataloader.dataset))
                 self.runner.model.metrics.append(metrics)
-            print("finish")
             self.runner.call_hook('after_val_epoch', metrics=metrics)
             self.runner.call_hook('after_val')
-            print(self.runner.model.metrics)
         else:
             for idx, data_batch in enumerate(self.dataloader):
-                self.run_iter(-1, idx, data_batch)
+                self.run_iter(idx, data_batch)
 
-            # compute metrics
             metrics = self.evaluator.evaluate(len(self.dataloader.dataset))
             self.runner.call_hook('after_val_epoch', metrics=metrics)
             self.runner.call_hook('after_val')
@@ -68,7 +61,7 @@ class DynamicValLoop(ValLoop):
     def get_threshold_and_flops(self):
         # [CS470] 강우성: threshold는 아래의 method를 통해 DynRetinaNet에 전달.
         # [CS470] 이정완: flops는 early exiting stage별 flops를 계산한 결과가 전달됩니다.
-        self.thresholds = _get_threshold()
+        self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.fp16) #self.runner.train_loop.dataloader
         print("Thresholds: " + str(self.thresholds))
         self.flops = self.runner.model.get_dynamic_flops(data_loader=self.dataloader)
         print("Flops per early exiting stages: " + str(self.flops))
@@ -77,18 +70,15 @@ class DynamicValLoop(ValLoop):
     def set_threshold(self, threshold):
         self.runner.model.set_threshold(threshold) # [CS470] 이정완: 모델에 threshold를 전달하는 법
 
+    def unset_threshold(self):
+        self.runner.model.unset_threshold()
+
     @torch.no_grad()
-    def run_iter(self, index, idx, data_batch: Sequence[dict]):
+    def run_iter(self, idx, data_batch: Sequence[dict]):
         self.runner.call_hook(
             'before_val_iter', batch_idx=idx, data_batch=data_batch)
-        # outputs should be sequence of BaseDataElement
-        #print("Check argument(Val loop):", self.dynamic_evaluate)
         if self.dynamic_evaluate:
-            #print("val loop dyn eval in")
             with autocast(enabled=self.fp16):
-                # 모델에 threshold를 넣어주는 방법입니다.
-                self.set_threshold(self.thresholds[index])
-                print("Thresholds for output: " + str(self.thresholds[index]))
                 outputs, y_early3, y_att, y_cnn, y_merge = self.runner.model.test_step(data_batch)
             self.evaluator.process(data_samples=outputs, data_batch=data_batch)
             self.runner.call_hook(
@@ -128,21 +118,21 @@ class DynamicTestLoop(TestLoop):
             self.get_threshold_and_flops()
             # [CS470] 이정완: [TODO] 여기서 threshold별 mAP 구해야합니다. run_ter 참조.
             # 그리고 하나 구현해두면 ValLoop에서도 동일하니 복붙하시면 됩니다.
-            for index, tensor in enumerate(self.thresholds):
-                print("Thresholds for output: " + str(self.thresholds[index]))
+            for _index, threshold in enumerate(self.thresholds):
+                print("Thresholds for output: " + str(threshold))
+                self.set_threshold(threshold)
                 for idx, data_batch in enumerate(self.dataloader):
-                    self.run_iter(index, idx, data_batch)
+                    self.run_iter(idx, data_batch)
+                self.unset_threshold()
                 metrics = self.evaluator.evaluate(len(self.dataloader.dataset))
                 self.runner.model.metrics.append(metrics)
-            print("finish")
             self.runner.call_hook('after_test_epoch', metrics=metrics)
             self.runner.call_hook('after_test')
         else:
             for idx, data_batch in enumerate(self.dataloader):
-                self.run_iter(-1, idx, data_batch)
+                self.run_iter(idx, data_batch)
 
             metrics = self.evaluator.evaluate(len(self.dataloader.dataset))
-            print("finish")
             self.runner.call_hook('after_test_epoch', metrics=metrics)
             self.runner.call_hook('after_test')
         return metrics
@@ -160,15 +150,15 @@ class DynamicTestLoop(TestLoop):
     def set_threshold(self, threshold):
         self.runner.model.set_threshold(threshold) # [CS470] 이정완: 모델에 threshold를 전달하는 법
 
+    def unset_threshold(self):
+        self.runner.model.unset_threshold()
+
     @torch.no_grad()
-    def run_iter(self, index, idx, data_batch: Sequence[dict]):
+    def run_iter(self, idx, data_batch: Sequence[dict]):
         self.runner.call_hook(
             'before_test_iter', batch_idx=idx, data_batch=data_batch)
         if self.dynamic_evaluate:
             with autocast(enabled=self.fp16):
-                # 모델에 threshold를 넣어주는 방법입니다.
-                self.set_threshold(self.thresholds[index])
-                #print("Thresholds for output: " + str(self.thresholds[index]))
                 outputs, y_early3, y_att, y_cnn, y_merge = self.runner.model.test_step(data_batch)
             self.evaluator.process(data_samples=outputs, data_batch=data_batch)
             self.runner.call_hook(
