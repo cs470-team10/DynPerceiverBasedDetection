@@ -70,7 +70,7 @@ class DynamicValLoop(ValLoop):
         # [CS470] 이정완: flops는 early exiting stage별 flops를 계산한 결과가 전달됩니다.
         self.thresholds = _get_threshold()
         print("Thresholds: " + str(self.thresholds))
-        self.flops = self.runner.model.get_dynamic_flops()
+        self.flops = self.runner.model.get_dynamic_flops(data_loader=self.dataloader)
         print("Flops per early exiting stages: " + str(self.flops))
         return
     
@@ -153,7 +153,7 @@ class DynamicTestLoop(TestLoop):
         # [CS470] 이정완: flops는 early exiting stage별 flops를 계산한 결과가 전달됩니다.
         self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.fp16) #self.runner.train_loop.dataloader
         print("Thresholds: " + str(self.thresholds))
-        self.flops = self.runner.model.get_dynamic_flops()
+        self.flops = self.runner.model.get_dynamic_flops(data_loader=self.dataloader)
         print("Flops per early exiting stages: " + str(self.flops))
         return
     
