@@ -3,7 +3,7 @@ from mmdet.registry import MODELS
 from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
 from .single_stage import SingleStageDetector
 
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Dict, OrderedDict
 
 from torch import Tensor
 import torch
@@ -11,11 +11,8 @@ import torch
 from mmdet.registry import MODELS
 from mmdet.structures import OptSampleList, SampleList
 from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
+from mmengine.utils import is_list_of
 
-from mmengine.logging import MMLogger
-from mmengine.runner import Runner
-from mmengine.utils import digit_version#, DictAction
-from mmengine.config import Config
 from mmdet.structures import SampleList
 from mmengine.analysis import get_model_complexity_info
 from mmengine.analysis.print_helper import _format_size
@@ -40,58 +37,67 @@ class DynRetinaNet(SingleStageDetector):
             test_cfg=test_cfg,
             data_preprocessor=data_preprocessor,
             init_cfg=init_cfg)
-        self.threshold = None
         if self.bbox_head.loss_dyn is not None:
             self.loss_earlyexit = True
             self.theta_factor = self.bbox_head.loss_dyn.theta_factor
         else:
             self.loss_earlyexit = False
             self.theta_factor = 0
-
-    # [CS470] 강우성: 너가 찾아둔 thresholds는 여기로 들어가서 정완님이 사용
-    # [CS470] 이정완: 우성이 것 참고하시면 됩니다.
-    def set_threshold(self, threshold):
-        self.threshold = threshold
-        self.backbone.set_threshold(threshold)
     
-    def unset_threshold(self):
-        self.backbone.unset_threshold()
-        self.threshold = None
-        
+    # Loss functions
     def loss(self, batch_inputs: Tensor,
              batch_data_samples: SampleList) -> Union[dict, list]:
-        x = self.extract_feat(batch_inputs)
-        losses = self.bbox_head.loss(x, batch_data_samples)
+        x, y_early3, y_att, y_cnn, y_merge = self.extract_feat(batch_inputs)
+        if self.loss_earlyexit:
+            earlyexit_preds = (y_early3, y_att, y_cnn, y_merge)
+            losses = self.bbox_head.loss(x, batch_data_samples, earlyexit_preds)
+        else:
+            losses = self.bbox_head.loss(x, batch_data_samples)
         return losses
+    
+    def parse_losses(
+        self, losses: Dict[str, torch.Tensor]
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        log_vars = []
+        earlyexit_loss = 0
+        earlyexit_loss_name = ''
+        for loss_name, loss_value in losses.items():
+            if "earlyexit" in loss_name:
+                earlyexit_loss_name = loss_name
+                if isinstance(loss_value, torch.Tensor):
+                    earlyexit_loss = loss_value.mean()
+                elif is_list_of(loss_value, torch.Tensor):
+                    earlyexit_loss = sum(_loss.mean() for _loss in loss_value)
+            elif isinstance(loss_value, torch.Tensor):
+                log_vars.append([loss_name, loss_value.mean()])
+            elif is_list_of(loss_value, torch.Tensor):
+                log_vars.append(
+                    [loss_name,
+                     sum(_loss.mean() for _loss in loss_value)])
+            else:
+                raise TypeError(
+                    f'{loss_name} is not a tensor or list of tensors')
+        loss = sum(value for key, value in log_vars if 'loss' in key)
+
+        if earlyexit_loss != 0:
+            log_vars.append([earlyexit_loss_name, earlyexit_loss])
+            loss = (1 - self.theta_factor) * loss + self.theta_factor * earlyexit_loss
+
+        log_vars.insert(0, ['loss', loss])
+        log_vars = OrderedDict(log_vars)
+
+        return loss, log_vars
 
     def predict(self,
                 batch_inputs: Tensor,
                 batch_data_samples: SampleList,
                 rescale: bool = True) -> SampleList:
-        if self.threshold is not None:
-            # [CS470] 이정완: [TODO] 여기 보면 x가 fpn의 featuremap result고, 뒤에 4개는 dynamic perceiver의 classifier의 값입니다.(아마 남우님이 뽑아주신 값이 나오지 않을까 싶습니다. [B, 80]?)
-            # 여기서 threshold랑 잘 비교해서 fpn의 output을 잘 0으로 패딩한 후에 bbox_head.predict에 넣어주면 됩니다.
-            # Threshold 구하는법: self.threshold에 있습니다. 근데 어떤 데이터구조로 받을지는 우성이랑 정하면 될 듯 합니다.
-            """
-            Q. Early exit을 하면 feauture map을 0으로 만들어줘야하는 것은 early exit을 했기 떄문이라는 근거가 있는데,
-               FPN의 output도 0으로 만들어줘야한다는 명분이 좀 부족하다는 생각이 문득 들었습니다. 같이 얘기해보면 좋을
-               것 같습니다.
-            """
-            x, y_early3, y_att, y_cnn, y_merge = self.extract_feat(batch_inputs)
-
-            results_list = self.bbox_head.predict(
-                x, batch_data_samples, rescale=rescale)
-            
-            batch_data_samples = self.add_pred_to_datasample(
-                batch_data_samples, results_list)
-            return batch_data_samples, y_early3, y_att, y_cnn, y_merge
-        else:
-            x, _y_early3, _y_att, _y_cnn, _y_merge= self.extract_feat(batch_inputs)
-            results_list = self.bbox_head.predict(
-                x, batch_data_samples, rescale=rescale)
-            batch_data_samples = self.add_pred_to_datasample(
-                batch_data_samples, results_list)
-            return batch_data_samples
+        x, _y_early3, _y_att, _y_cnn, _y_merge = self.extract_feat(batch_inputs)
+        results_list = self.bbox_head.predict(
+            x, batch_data_samples, rescale=rescale)
+        batch_data_samples = self.add_pred_to_datasample(
+            batch_data_samples, results_list)
+        return batch_data_samples
     
     def _forward(
             self,
@@ -109,7 +115,7 @@ class DynRetinaNet(SingleStageDetector):
         Returns:
             tuple[list]: A tuple of features from ``bbox_head`` forward.
         """
-        x = self.extract_feat(batch_inputs)
+        x, _y_early3, _y_att, _y_cnn, _y_merge = self.extract_feat(batch_inputs)
         results = self.bbox_head.forward(x)
         return results
 
@@ -123,39 +129,12 @@ class DynRetinaNet(SingleStageDetector):
             tuple[Tensor]: Multi-level features that may have
             different resolutions.
         """
-        # [CS470] 이정완: 아래의 코드는 threshold를 backbone 단에 넣어주고 싶을 때 사용합니다.
-        #               만약 우리가 논의했던 "2번째 방법"이라면 아래의 코드를 지우면 됩니다.
-        #               아래의 코드가 있다면 backbone에서 feature map을 zero로 만들어줘서 출력하므로
-        #               (남우가 작성한 코드가 돌아가므로) 정완님이 따로 threshold를 비교할 필요가 없어집니다.
-        # [CS470] 김남우: 아래의 코드는 threshold를 backbone 단에 넣어주고 싶을 때 사용합니다.
-        # ------------------------------------------------------------------------
-
         x, y_early3, y_att, y_cnn, y_merge = self.backbone(batch_inputs)
-
-
-        # [CS470] 이정완: 아래의 코드는 threshold를 backbone 단에 넣어주고 싶을 때 사용합니다.
-        #               만약 우리가 논의했던 "2번째 방법"이라면 아래의 코드를 지우면 됩니다.
-        #               아래의 코드가 있다면 backbone에서 feature map을 zero로 만들어줘서 출력하므로
-        #               (남우가 작성한 코드가 돌아가므로) 정완님이 따로 threshold를 비교할 필요가 없어집니다.
-        # [CS470] 김남우: 아래의 코드는 threshold를 backbone 단에 넣어주고 싶을 때 사용합니다.
-        # ------------------------------------------------------------------------
-
-
-        # for a in x:
-        #     print("Featuremap out: " + str(list(a.size())))
         if self.with_neck:
             x = self.neck(x)
-            # for a in x:
-            #     print("neck out: " + str(list(a.size())))
-        
-        if self.threshold is None:
-            return x
-        else:
-            return x, y_early3, y_att, y_cnn, y_merge
+        return x, y_early3, y_att, y_cnn, y_merge
     
-
-
-
+    # Helper Functions
     def get_dynamic_flops(self, data_loader, num_images=100):
         # [CS470] 김남우, [CS470] 이찬규: [TODO]
         # 이건 뭐 별거는 아닌데, 우린 결국 flops별 accuarcy를 비교하는 것이니까
@@ -170,7 +149,7 @@ class DynRetinaNet(SingleStageDetector):
             [-1, 10, 10, 10],
             [10, -1, 10, 10],
             [10, 10, -1, 10],
-            [10, 10, 10, 10]
+            [10, 10, 10, -1]
         ])
         flops_list = []
         self.eval()
@@ -198,3 +177,10 @@ class DynRetinaNet(SingleStageDetector):
 
         return torch.tensor(flops_list)
     
+    # [CS470] 강우성: 너가 찾아둔 thresholds는 여기로 들어가서 정완님이 사용
+    # [CS470] 이정완: 우성이 것 참고하시면 됩니다.
+    def set_threshold(self, threshold):
+        self.backbone.set_threshold(threshold)
+    
+    def unset_threshold(self):
+        self.backbone.unset_threshold()

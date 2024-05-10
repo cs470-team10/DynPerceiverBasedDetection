@@ -18,8 +18,7 @@ model = dict(
         in_channels=[64, 144, 320, 784],
         out_channels=256,
         num_outs=5),
-    type='DynRetinaNet',
-    dynamic_evaluate=dynamic_evaluate
+    type='DynRetinaNet'
 )
 
 custom_hooks = [
@@ -27,8 +26,7 @@ custom_hooks = [
          init_kwargs=dict(project='cs470', entity='plasma3365'),
          interval=10,
          log_checkpoint=True,
-         log_model=True,
-         dynamic_perceiver=True)
+         log_model=True)
 ]
 val_cfg = dict(type='DynamicValLoop', dynamic_evaluate=dynamic_evaluate)
 test_cfg = dict(type='DynamicTestLoop', dynamic_evaluate=dynamic_evaluate)

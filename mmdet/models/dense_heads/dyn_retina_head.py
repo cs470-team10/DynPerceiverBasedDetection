@@ -5,12 +5,14 @@ from mmcv.cnn import ConvModule
 from mmdet.registry import MODELS
 from .anchor_head import AnchorHead
 from torch import Tensor
+import torch
 
 from mmdet.structures.bbox import cat_boxes
-from mmdet.utils import (InstanceList, OptInstanceList, ConfigType)
+from mmdet.utils import (InstanceList, OptInstanceList, ConfigType, SampleList)
 
-from ..utils import images_to_levels, multi_apply
-from typing import List
+from ..utils import images_to_levels, multi_apply, unpack_gt_instances
+from typing import List, Tuple
+import torch.nn.functional as F
 
 
 @MODELS.register_module()
@@ -134,6 +136,18 @@ class DynRetinaHead(AnchorHead):
         # print("cls_score: " + str(list(cls_score.size())))
         # print("bbox_pred: " + str(list(bbox_pred.size())))
         return cls_score, bbox_pred
+    
+    def loss(self, x: Tuple[Tensor], batch_data_samples: SampleList, earlyexit_preds = None) -> dict:
+        outs = self(x)
+
+        outputs = unpack_gt_instances(batch_data_samples)
+        (batch_gt_instances, batch_gt_instances_ignore,
+         batch_img_metas) = outputs
+
+        loss_inputs = outs + (batch_gt_instances, batch_img_metas,
+                              batch_gt_instances_ignore, earlyexit_preds)
+        losses = self.loss_by_feat(*loss_inputs)
+        return losses
 
     def loss_by_feat(
             self,
@@ -141,7 +155,8 @@ class DynRetinaHead(AnchorHead):
             bbox_preds: List[Tensor],
             batch_gt_instances: InstanceList,
             batch_img_metas: List[dict],
-            batch_gt_instances_ignore: OptInstanceList = None) -> dict:
+            batch_gt_instances_ignore: OptInstanceList = None,
+            earlyexit_preds = None) -> dict:
 
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
         assert len(featmap_sizes) == self.prior_generator.num_levels
@@ -181,9 +196,11 @@ class DynRetinaHead(AnchorHead):
         if self.loss_dyn is None:
             return dict(loss_cls=losses_cls, loss_bbox=losses_bbox)
         else:
-            loss_earlyexit = self.loss_dyn(self.earlyexit_pred, self.earlyexit_target)
+            loss_earlyexit = self.loss_dyn(earlyexit_preds, self.get_earlyexit_target(batch_gt_instances))
             return dict(loss_cls=losses_cls, loss_bbox=losses_bbox, loss_earlyexit=loss_earlyexit)
-        
-    def set_loss_earlyexit(self, pred, target):
-        self.earlyexit_pred = pred
-        self.earlyexit_target = target
+
+    def get_earlyexit_target(self, batch_gt_instances: InstanceList) -> Tensor:
+        labels = []
+        for t in batch_gt_instances:
+            labels.append(t.labels.tolist()[0])
+        return F.one_hot(torch.tensor(labels), num_classes=80)

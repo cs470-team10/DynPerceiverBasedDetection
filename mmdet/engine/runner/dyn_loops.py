@@ -73,30 +73,6 @@ class DynamicValLoop(ValLoop):
     def unset_threshold(self):
         self.runner.model.unset_threshold()
 
-    @torch.no_grad()
-    def run_iter(self, idx, data_batch: Sequence[dict]):
-        self.runner.call_hook(
-            'before_val_iter', batch_idx=idx, data_batch=data_batch)
-        if self.dynamic_evaluate:
-            with autocast(enabled=self.fp16):
-                outputs, y_early3, y_att, y_cnn, y_merge = self.runner.model.test_step(data_batch)
-            self.evaluator.process(data_samples=outputs, data_batch=data_batch)
-            self.runner.call_hook(
-                'after_val_iter',
-                batch_idx=idx,
-                data_batch=data_batch,
-                outputs=outputs)
-        else:
-            with autocast(enabled=self.fp16):
-                outputs = self.runner.model.test_step(data_batch)
-
-            self.evaluator.process(data_samples=outputs, data_batch=data_batch)
-            self.runner.call_hook(
-                'after_val_iter',
-                batch_idx=idx,
-                data_batch=data_batch,
-                outputs=outputs)
-
 @LOOPS.register_module()
 class DynamicTestLoop(TestLoop):
     def __init__(self,
@@ -152,35 +128,3 @@ class DynamicTestLoop(TestLoop):
 
     def unset_threshold(self):
         self.runner.model.unset_threshold()
-
-    @torch.no_grad()
-    def run_iter(self, idx, data_batch: Sequence[dict]):
-        self.runner.call_hook(
-            'before_test_iter', batch_idx=idx, data_batch=data_batch)
-        if self.dynamic_evaluate:
-            with autocast(enabled=self.fp16):
-                outputs, y_early3, y_att, y_cnn, y_merge = self.runner.model.test_step(data_batch)
-            self.evaluator.process(data_samples=outputs, data_batch=data_batch)
-            self.runner.call_hook(
-                'after_test_iter',
-                batch_idx=idx,
-                data_batch=data_batch,
-                outputs=outputs)
-        else:
-            with autocast(enabled=self.fp16):
-                outputs = self.runner.model.test_step(data_batch)
-
-            self.evaluator.process(data_samples=outputs, data_batch=data_batch)
-            self.runner.call_hook(
-                'after_test_iter',
-                batch_idx=idx,
-                data_batch=data_batch,
-                outputs=outputs)
-            
-
-def get_label_list(data_batch: Sequence[dict]) -> Tensor:
-    labels = []
-    
-    for t in data_batch['data_samples']:
-        labels.append(t.gt_instances.labels.tolist()[0])
-    return torch.tensor(labels)

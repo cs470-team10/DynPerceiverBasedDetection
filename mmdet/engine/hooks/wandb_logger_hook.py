@@ -2,18 +2,17 @@ from mmengine.registry import HOOKS
 from mmengine.hooks import Hook
 import wandb
 from mmengine.runner import *
-from .dynamic_summary import summary
+from torchsummary import summary
 from io import StringIO
 import sys
 
 @HOOKS.register_module()
 class WandbLoggerHook(Hook):
-    def __init__(self, interval=1, log_checkpoint=True, log_model=True, dynamic_perceiver = False, **kwargs):
+    def __init__(self, interval=1, log_checkpoint=True, log_model=True, **kwargs):
         super().__init__()
         self.interval = interval
         self.log_checkpoint = log_checkpoint
         self.log_model = log_model
-        self.dynamic_perceiver = dynamic_perceiver
 
     def after_train_iter(self, runner, **kwargs):
         if self.every_n_inner_iters(runner.iter, self.interval):
@@ -35,7 +34,7 @@ class WandbLoggerHook(Hook):
             original_stdout = sys.stdout  # Save a reference to the original standard output
             sys.stdout = StringIO()  # Redirect standard output to a StringIO object.
             
-            summary(runner.model, input_size=(3, 1333, 800), dynamic_perceiver=self.dynamic_perceiver)
+            summary(runner.model, input_size=(3, 1333, 800))
             
             model_summary = sys.stdout.getvalue()  # Retrieve the value written to the StringIO object
             sys.stdout = original_stdout  # Restore the standard output to its original value
