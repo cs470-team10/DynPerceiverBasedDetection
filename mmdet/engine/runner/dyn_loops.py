@@ -26,7 +26,7 @@ class DynamicValLoop(ValLoop):
                  fp16: bool = False,
                  dynamic_evaluate: bool = False):
         super().__init__(runner, dataloader, evaluator, fp16)
-        print("[CS470] Dynamic Validation")
+        cs470_print("Dynamic Validation")
         self.dynamic_evaluate = dynamic_evaluate
 
     def run(self) -> dict:
@@ -39,7 +39,7 @@ class DynamicValLoop(ValLoop):
             # [CS470] 이정완: [TODO] 여기서 threshold별 mAP 구해야합니다. run_ter 참조.
             # 그리고 하나 구현해두면 ValLoop에서도 동일하니 복붙하시면 됩니다.
             for _index, threshold in enumerate(self.thresholds):
-                print("Thresholds for output: " + str(threshold))
+                cs470_print("Thresholds for output: " + str(threshold.tolist()))
                 self.set_threshold(threshold)
                 for idx, data_batch in enumerate(self.dataloader):
                     self.run_iter(idx, data_batch)
@@ -62,9 +62,9 @@ class DynamicValLoop(ValLoop):
         # [CS470] 강우성: threshold는 아래의 method를 통해 DynRetinaNet에 전달.
         # [CS470] 이정완: flops는 early exiting stage별 flops를 계산한 결과가 전달됩니다.
         self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.fp16) #self.runner.train_loop.dataloader
-        print("Thresholds: " + str(self.thresholds))
+        cs470_print("Thresholds: " + str(self.thresholds.tolist()))
         self.flops = self.runner.model.get_dynamic_flops(data_loader=self.dataloader)
-        print("Flops per early exiting stages: " + str(self.flops))
+        cs470_print("Flops per early exiting stages: " + str(self.flops.tolist()))
         return
     
     def set_threshold(self, threshold):
@@ -82,7 +82,7 @@ class DynamicTestLoop(TestLoop):
                  fp16: bool = False,
                  dynamic_evaluate: bool = False):
         super().__init__(runner, dataloader, evaluator, fp16)
-        print("[CS470] Dynamic Test")
+        cs470_print("Dynamic Test")
         self.dynamic_evaluate = dynamic_evaluate
 
     def run(self) -> dict:
@@ -95,7 +95,7 @@ class DynamicTestLoop(TestLoop):
             # [CS470] 이정완: [TODO] 여기서 threshold별 mAP 구해야합니다. run_ter 참조.
             # 그리고 하나 구현해두면 ValLoop에서도 동일하니 복붙하시면 됩니다.
             for _index, threshold in enumerate(self.thresholds):
-                print("Thresholds for output: " + str(threshold))
+                cs470_print("Thresholds for output: " + str(threshold.tolist()))
                 self.set_threshold(threshold)
                 for idx, data_batch in enumerate(self.dataloader):
                     self.run_iter(idx, data_batch)
@@ -118,9 +118,9 @@ class DynamicTestLoop(TestLoop):
         # [CS470] 강우성: threshold는 아래의 method를 통해 DynRetinaNet에 전달.
         # [CS470] 이정완: flops는 early exiting stage별 flops를 계산한 결과가 전달됩니다.
         self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.fp16) #self.runner.train_loop.dataloader
-        print("Thresholds: " + str(self.thresholds))
+        cs470_print("Thresholds: " + str(self.thresholds.tolist()))
         self.flops = self.runner.model.get_dynamic_flops(data_loader=self.dataloader)
-        print("Flops per early exiting stages: " + str(self.flops))
+        cs470_print("Flops per early exiting stages: " + str(self.flops.tolist()))
         return
     
     def set_threshold(self, threshold):
@@ -128,3 +128,7 @@ class DynamicTestLoop(TestLoop):
 
     def unset_threshold(self):
         self.runner.model.unset_threshold()
+
+
+def cs470_print(line:str):
+    print("[CS470] " + line)

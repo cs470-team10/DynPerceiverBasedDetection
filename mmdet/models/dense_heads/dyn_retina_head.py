@@ -8,7 +8,9 @@ from torch import Tensor
 import torch
 
 from mmdet.structures.bbox import cat_boxes
-from mmdet.utils import (InstanceList, OptInstanceList, ConfigType, SampleList)
+from mmdet.structures import SampleList
+
+from mmdet.utils import (InstanceList, OptInstanceList, ConfigType)
 
 from ..utils import images_to_levels, multi_apply, unpack_gt_instances
 from typing import List, Tuple
@@ -65,16 +67,16 @@ class DynRetinaHead(AnchorHead):
         self.stacked_convs = stacked_convs
         self.conv_cfg = conv_cfg
         self.norm_cfg = norm_cfg
-        if loss_dyn is not None:
-            self.loss_dyn = MODELS.build(loss_dyn)
-        else:
-            self.loss_dyn = None
         super(DynRetinaHead, self).__init__(
             num_classes,
             in_channels,
             anchor_generator=anchor_generator,
             init_cfg=init_cfg,
             **kwargs)
+        if loss_dyn is not None:
+            self.loss_dyn = MODELS.build(loss_dyn)
+        else:
+            self.loss_dyn = None
 
     def _init_layers(self):
         """Initialize layers of the head."""
@@ -203,4 +205,4 @@ class DynRetinaHead(AnchorHead):
         labels = []
         for t in batch_gt_instances:
             labels.append(t.labels.tolist()[0])
-        return F.one_hot(torch.tensor(labels), num_classes=80)
+        return F.one_hot(torch.tensor(labels), num_classes=self.num_classes).float().cuda()

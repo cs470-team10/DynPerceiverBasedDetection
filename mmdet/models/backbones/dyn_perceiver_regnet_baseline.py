@@ -5,10 +5,11 @@ from mmengine.model import BaseModule
 
 @MODELS.register_module()
 class DynPerceiverBaseline(BaseModule):
-    def __init__(self, init_cfg, test_num, **args):
+    def __init__(self, init_cfg, test_num, num_classes=1000, **args):
         super(DynPerceiverBaseline, self).__init__(init_cfg)
         self.dyn_perceiver = DynPerceiver(
             num_latents=128,
+            num_classes=num_classes,
             cnn_arch='regnet_y_800mf',
             depth_factor=[1,1,1,2],
             spatial_reduction=True,

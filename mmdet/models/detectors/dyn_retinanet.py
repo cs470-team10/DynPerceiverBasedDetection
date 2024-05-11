@@ -18,6 +18,7 @@ from mmengine.analysis import get_model_complexity_info
 from mmengine.analysis.print_helper import _format_size
 import numpy as np
 from functools import partial
+from copy import deepcopy
 
 @MODELS.register_module()
 class DynRetinaNet(SingleStageDetector):
@@ -43,6 +44,7 @@ class DynRetinaNet(SingleStageDetector):
         else:
             self.loss_earlyexit = False
             self.theta_factor = 0
+        self.metrics = []
     
     # Loss functions
     def loss(self, batch_inputs: Tensor,
@@ -152,19 +154,20 @@ class DynRetinaNet(SingleStageDetector):
             [10, 10, 10, -1]
         ])
         flops_list = []
-        self.eval()
+        model = deepcopy(self)
+        model.eval()
 
         for threshold in thresholds:
-            self.set_threshold(threshold)
+            model.set_threshold(threshold)
             avg_flops = []
             for idx, data_batch in enumerate(data_loader):
                 if idx == num_images:
                     break
                 data = self.data_preprocessor(data_batch)
 
-                self.forward = partial(self._forward)
+                model.forward = partial(model._forward)
                 outputs = get_model_complexity_info(
-                    self,
+                    model,
                     None,
                     inputs=data['inputs'],
                     show_table=False,
@@ -173,7 +176,7 @@ class DynRetinaNet(SingleStageDetector):
 
             mean_flops = int(np.average(avg_flops))
             flops_list.append(mean_flops)
-            self.unset_threshold()
+            model.unset_threshold()
 
         return torch.tensor(flops_list)
     

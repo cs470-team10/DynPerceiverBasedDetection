@@ -40,7 +40,7 @@ class DynPerceiver(nn.Module):
         if num_SA_heads is None:
             num_SA_heads = [1,2,4,8]
             
-        cnn = eval(f'{cnn_arch}')()  # interpret the cnn_arch string as a class name and instantiate it
+        cnn = eval(f'{cnn_arch}')(num_classes=num_classes)  # interpret the cnn_arch string as a class name and instantiate it
         self.cnn_stem = cnn.stem
         self.cnn_body = cnn.trunk_output
         # num_blocks_per_stage = [len(self.cnn_body.block1)*depth_factor[0], len(self.cnn_body.block2)*depth_factor[1], 

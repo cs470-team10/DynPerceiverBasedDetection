@@ -2,7 +2,7 @@ from mmengine.registry import HOOKS
 from mmengine.hooks import Hook
 import wandb
 from mmengine.runner import *
-from torchsummary import summary
+from .dynamic_summary import summary
 from io import StringIO
 import sys
 

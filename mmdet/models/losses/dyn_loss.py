@@ -10,12 +10,12 @@ from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
 class DynLoss(nn.Module):
 
     def __init__(self,
+                 theta_factor,
                  mixup_fn=None,
                  smoothing_=0,
                  loss_cnn_factor=0.25,
                  loss_att_factor=0.25,
-                 loss_merge_factor=0.5,
-                 theta_factor=0.5
+                 loss_merge_factor=0.5
                  ):
         super(DynLoss, self).__init__()
         self.mixup_fn = mixup_fn
@@ -35,7 +35,6 @@ class DynLoss(nn.Module):
     def forward(self, 
                 pred, 
                 target):
-        
         loss_early3 = self.criterion(pred[0], target)
         loss_att = self.criterion(pred[1], target)
         loss_cnn = self.criterion(pred[2], target)
@@ -43,4 +42,4 @@ class DynLoss(nn.Module):
 
         loss = self.loss_cnn_factor*loss_cnn + self.loss_att_factor*(loss_att+loss_early3) + self.loss_merge_factor*loss_merge
         
-        return loss, self.theta_factor
+        return loss
