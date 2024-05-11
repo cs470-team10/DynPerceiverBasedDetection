@@ -101,4 +101,9 @@ nohup python3 tools/test.py \
 # RegNetY-800MF Based RetinaNet
 nohup python3 tools/train.py \
     baselines/regnety_800mf_wo_dyn_perceiver/retinanet_regnety-800MF_fpn_1x_coco_single.py \
-    --auto-scale-lr > jiyong.out &
+    --auto-scale-lr > regnety_single_evaluation.out &
+
+# Debug
+nohup python3 tools/train.py \
+    baselines/regnety_800mf_with_dyn_perceiver/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-debug.py \
+    --auto-scale-lr > debug.out &

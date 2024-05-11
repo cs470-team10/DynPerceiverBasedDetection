@@ -62,7 +62,7 @@ class DynamicValLoop(ValLoop):
         # [CS470] 강우성: threshold는 아래의 method를 통해 DynRetinaNet에 전달.
         # [CS470] 이정완: flops는 early exiting stage별 flops를 계산한 결과가 전달됩니다.
         self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.fp16) #self.runner.train_loop.dataloader
-        cs470_print("Thresholds: " + str(self.thresholds.tolist()))
+        cs470_print("Thresholds: " + str([threshold.tolist() for threshold in self.thresholds]))
         self.flops = self.runner.model.get_dynamic_flops(data_loader=self.dataloader)
         cs470_print("Flops per early exiting stages: " + str(self.flops.tolist()))
         return
@@ -118,7 +118,7 @@ class DynamicTestLoop(TestLoop):
         # [CS470] 강우성: threshold는 아래의 method를 통해 DynRetinaNet에 전달.
         # [CS470] 이정완: flops는 early exiting stage별 flops를 계산한 결과가 전달됩니다.
         self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.fp16) #self.runner.train_loop.dataloader
-        cs470_print("Thresholds: " + str(self.thresholds.tolist()))
+        cs470_print("Thresholds: " + str([threshold.tolist() for threshold in self.thresholds]))
         self.flops = self.runner.model.get_dynamic_flops(data_loader=self.dataloader)
         cs470_print("Flops per early exiting stages: " + str(self.flops.tolist()))
         return
