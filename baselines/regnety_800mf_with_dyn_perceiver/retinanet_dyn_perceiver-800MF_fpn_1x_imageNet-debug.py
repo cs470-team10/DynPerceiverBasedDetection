@@ -42,6 +42,9 @@ model = dict(
         in_channels=[64, 144, 320, 784],
         out_channels=256,
         num_outs=5),
+    bbox_head=dict(
+        loss_dyn=None,
+        type='DynRetinaHead'),
     type='DynRetinaNet'
 )
 
