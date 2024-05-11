@@ -7,12 +7,8 @@ model = dict(
         type='RegNetY800MF',
         init_cfg=dict(type='Pretrained', 
                       checkpoint='./baselines/regnety_800mf_wo_dyn_perceiver/regnet_y_800mf-converted.pth')),
-    neck=dict(
-        type='FPN',
-        # in_channels=[64, 128, 288, 672],
-        in_channels=[64, 144, 320, 784],
-        out_channels=256,
-        num_outs=5))
+    neck=dict(in_channels=[64, 144, 320, 784])
+)
 
 custom_hooks = [
     dict(type='WandbLoggerHook',
