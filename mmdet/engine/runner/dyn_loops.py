@@ -1,6 +1,6 @@
 from mmengine.runner import ValLoop, TestLoop
 from mmengine.runner.amp import autocast
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Union
 
 from torch.utils.data import DataLoader
 from mmengine.evaluator import Evaluator
@@ -9,7 +9,7 @@ from mmdet.registry import LOOPS
 
 from dyn_perceiver.get_threshold import get_threshold as _get_threshold
 import torch
-from torch import Tensor
+from cs470_logger.cs470_print import cs470_print
 
 # [CS470] 강우성, [CS470] 이정완: 아까 저희가 봤던 Loop을 수정한 버전입니다. Dynamic Evaluation은 여기서 일어난다고 생각하시면 될 것 같습니다.
 # Early Exiting을 위해서는 classifier의 결과가 필요한데, 이를 위해서 DynRetinaNet이라는 구조가 추가되었습니다.
@@ -128,7 +128,3 @@ class DynamicTestLoop(TestLoop):
 
     def unset_threshold(self):
         self.runner.model.unset_threshold()
-
-
-def cs470_print(line:str):
-    print("[CS470] " + line)
