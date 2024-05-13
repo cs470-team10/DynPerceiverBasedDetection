@@ -13,7 +13,7 @@ model = dict(
                       checkpoint='./baselines/regnety_800mf_with_dyn_perceiver/reg800m_perceiver_t128_converted.pth')),
     neck=dict(in_channels=[64, 144, 320, 784]),
     bbox_head=dict(
-        loss_dyn=dict(theta_factor=0.5, type='DynLoss'),
+    loss_dyn=dict(theta_factor=0.1, type='DynLoss'),
         type='DynRetinaHead'),
     type='DynRetinaNet'
 )
@@ -29,35 +29,22 @@ val_cfg = dict(type='DynamicValLoop', dynamic_evaluate=dynamic_evaluate)
 test_cfg = dict(type='DynamicTestLoop', dynamic_evaluate=dynamic_evaluate)
 
 # coco single
-# test_dataloader = dict(
-#     dataset=dict(
-#         ann_file='annotations/singlebox_instances_val2017.json',
-#         data_prefix=dict(img='val_single/')))
-# test_evaluator = dict(
-#     ann_file='data/coco/annotations/singlebox_instances_val2017.json')
-# train_dataloader = dict(
-#     dataset=dict(
-#         ann_file='annotations/singlebox_instances_train2017.json',
-#         backend_args=None,
-#         data_prefix=dict(img='train_single/')))
-# val_dataloader = dict(
-#     dataset=dict(
-#         ann_file='annotations/singlebox_instances_val2017.json',
-#         data_prefix=dict(img='val_single/')))
-# val_evaluator = dict(
-#     ann_file='data/coco/annotations/singlebox_instances_val2017.json')
-
-# subset
-classes = ('stop sign')
-train_dataloader = dict(
-    dataset=dict(
-        metainfo=dict(classes=classes))
-    )
-val_dataloader = dict(
-    dataset=dict(
-        metainfo=dict(classes=classes))
-    )
 test_dataloader = dict(
     dataset=dict(
-        metainfo=dict(classes=classes))
-    )
+        ann_file='annotations/singlebox_instances_val2017.json',
+        data_prefix=dict(img='val_single/')))
+test_evaluator = dict(
+    ann_file='data/coco/annotations/singlebox_instances_val2017.json')
+train_dataloader = dict(
+    batch_sampler=dict(drop_last=True),
+    dataset=dict(
+        ann_file='annotations/singlebox_instances_train2017.json',
+        backend_args=None,
+        data_prefix=dict(img='train_single/')))
+val_dataloader = dict(
+    dataset=dict(
+        ann_file='annotations/singlebox_instances_val2017.json',
+        data_prefix=dict(img='val_single/')))
+val_evaluator = dict(
+    ann_file='data/coco/annotations/singlebox_instances_val2017.json')
+

@@ -2,6 +2,7 @@ import warnings
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from mmdet.registry import MODELS
 from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
@@ -15,7 +16,10 @@ class DynLoss(nn.Module):
                  smoothing_=0,
                  loss_cnn_factor=0.25,
                  loss_att_factor=0.25,
-                 loss_merge_factor=0.5
+                 loss_merge_factor=0.5,
+                 with_kd=True,
+                 T_kd=1.0,
+                 alpha_kd=0.5
                  ):
         super(DynLoss, self).__init__()
         self.mixup_fn = mixup_fn
@@ -24,6 +28,9 @@ class DynLoss(nn.Module):
         self.loss_att_factor = loss_att_factor
         self.loss_merge_factor = loss_merge_factor
         self.theta_factor = theta_factor
+        self.with_kd = with_kd
+        self.T_kd=T_kd
+        self.alpha_kd=alpha_kd
 
         if self.mixup_fn is not None:
             self.criterion = SoftTargetCrossEntropy()
@@ -42,4 +49,13 @@ class DynLoss(nn.Module):
 
         loss = self.loss_cnn_factor*loss_cnn + self.loss_att_factor*(loss_att+loss_early3) + self.loss_merge_factor*loss_merge
         
+        if self.with_kd:
+            out_teacher = pred[3].detach()
+        
+            kd_loss = F.kl_div(F.log_softmax(pred[0]/self.T_kd, dim=1),F.softmax(out_teacher/self.T_kd, dim=1), reduction='batchmean') * self.T_kd**2 + \
+                    F.kl_div(F.log_softmax(pred[1]/self.T_kd, dim=1),F.softmax(out_teacher/self.T_kd, dim=1), reduction='batchmean') * self.T_kd**2 + \
+                    F.kl_div(F.log_softmax(pred[2]/self.T_kd, dim=1),F.softmax(out_teacher/self.T_kd, dim=1), reduction='batchmean') * self.T_kd**2
+
+            loss += self.alpha_kd * kd_loss
+
         return loss
