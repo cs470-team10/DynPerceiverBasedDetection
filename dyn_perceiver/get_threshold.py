@@ -89,8 +89,9 @@ class Tester(object):
             
             targets.append(torch.tensor(tmp_labels))
             
-            packed_inputs = demo_mm_inputs(2, [[3, 128, 128], [3, 125, 130]])
-            data = self.model.data_preprocessor(packed_inputs, False)
+            #packed_inputs = demo_mm_inputs(2, [[3, 128, 128], [3, 125, 130]])
+            #data = self.data_preprocessor(data_batch)
+            data = self.model.data_preprocessor(sample)
             input = data['inputs']
 
             input = input.cuda()
@@ -102,7 +103,7 @@ class Tester(object):
 
                     logits[b].append(_t)
                     
-            if idx % 1000 == 0:
+            if idx % 50 == 0:
                 print('Generate Logit: [{0}/{1}]'.format(idx, len(dataloader)))
         
         for b in range(n_stage):

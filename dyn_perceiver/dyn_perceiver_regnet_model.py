@@ -341,6 +341,10 @@ class DynPerceiver(nn.Module):
         self.forward_calc_flops(x)
 
         self.softmax = nn.Softmax(dim=1).cuda()
+        self.last_exited_stage = 4
+
+    def get_last_exited_stage(self):
+        return self.last_exited_stage
 
     def _init_parameters(self):
         """
@@ -533,6 +537,7 @@ class DynPerceiver(nn.Module):
             for i in range(n_sample):
                 for k in range(n_stage):
                     if max_preds[k][i].item() >= threshold[k]:
+                        self.last_exited_stage = k + 1 # 어느 스테이지에서 exit했는지 정보 필요. 1~4 range
                         for j in range(k+1, n_stage):
                             outs[j][i].zero_()
 

@@ -39,6 +39,9 @@ class DynPerceiverBaseline(BaseModule):
     
     def unset_threshold(self):
         self.threshold = None
+
+    def get_last_exited_stage(self):
+        return self.dyn_perceiver.get_last_exited_stage()
     
     def train(self, mode=True):
         self.dyn_perceiver.train(mode)
