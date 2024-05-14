@@ -3,7 +3,7 @@ _base_ = '../configs/regnet/retinanet_regnetx-3.2GF_fpn_1x_coco.py'
 
 
 custom_imports = dict(
-    imports=['mmdet.models.backbones.dyn_perceiver_regnet_baseline'],
+    imports=['mmdet.models.backbones.dyn_perceiver_regnet_zeromap'],
     allow_failed_imports=False)
 model = dict(
     backbone=dict(
