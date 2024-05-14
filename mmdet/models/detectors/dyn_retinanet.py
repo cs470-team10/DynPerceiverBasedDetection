@@ -19,6 +19,7 @@ from mmengine.analysis.print_helper import _format_size
 import numpy as np
 from functools import partial
 from copy import deepcopy
+from cs470_logger.cs470_print import cs470_print
 
 @MODELS.register_module()
 class DynRetinaNet(SingleStageDetector):
@@ -132,6 +133,9 @@ class DynRetinaNet(SingleStageDetector):
             different resolutions.
         """
         x, y_early3, y_att, y_cnn, y_merge = self.backbone(batch_inputs)
+        # cs470_print(f"Exited in {self.backbone.get_last_exited_stage()}")
+        # for i in range(len(x)):
+        #     cs470_print(f"Featuremap {str(i + 1)} size: {str(x[i].size())}{', zero' if torch.all(x[i] == 0) else ''}")
         if self.with_neck:
             x = self.neck(x)
         return x, y_early3, y_att, y_cnn, y_merge
@@ -156,6 +160,7 @@ class DynRetinaNet(SingleStageDetector):
         flops_list = []
         model = deepcopy(self)
         model.eval()
+        model.forward = partial(model._forward)
 
         for threshold in thresholds:
             model.set_threshold(threshold)
@@ -163,9 +168,7 @@ class DynRetinaNet(SingleStageDetector):
             for idx, data_batch in enumerate(data_loader):
                 if idx == num_images:
                     break
-                data = self.data_preprocessor(data_batch)
-
-                model.forward = partial(model._forward)
+                data = model.data_preprocessor(data_batch)
                 outputs = get_model_complexity_info(
                     model,
                     None,

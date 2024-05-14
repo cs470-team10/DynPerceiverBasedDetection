@@ -342,6 +342,7 @@ class DynPerceiver(nn.Module):
 
         self.softmax = nn.Softmax(dim=1).cuda()
         self.last_exited_stage = 4
+        self.output_fmap_sizes = [[1, 64, 200, 304], [1, 144, 100, 152], [1, 320, 50, 76], [1, 784, 25, 38]]
 
     def get_last_exited_stage(self):
         return self.last_exited_stage
@@ -452,6 +453,28 @@ class DynPerceiver(nn.Module):
         y_early3 = torch.mean(x_latent, dim=1).squeeze(1)
         y_early3 = self.early_classifier3(y_early3)
         outs.append(x)
+
+        logits = [[] for _ in range(1)]
+        if threshold is not None:
+            _t = self.softmax(y_early3)
+            logits[0].append(_t)
+            logits[0] = torch.cat(logits[0], dim=0)
+
+            size = (1, logits[0].size(0), logits[0].size(1))
+            ts_logits = torch.Tensor().resize_(size).zero_()
+            ts_logits[0].copy_(logits[0])
+
+            _, n_sample, _ =  ts_logits.size()
+            max_preds, _ = ts_logits.max(dim=2, keepdim=False)
+
+            for i in range(n_sample):
+                if max_preds[0][i].item() >= threshold[0]:
+                    self.last_exited_stage = 1 
+                    for k in range(2, 4):
+                        outs.append(torch.zeros(*self.output_fmap_sizes[k]).cuda())
+            
+                    return y_early3, torch.zeros_like(y_early3), torch.zeros_like(y_early3), torch.zeros_like(y_early3), outs 
+
         x = self.cnn_body.block3(x)
 
         # between stage3 and stage4
@@ -491,12 +514,53 @@ class DynPerceiver(nn.Module):
         else:
             y_att = self.classifier_att(x_latent_mean)
         outs.append(x)
+
+        logits = [[] for _ in range(1)]
+        if threshold is not None:
+            _t = self.softmax(y_att)
+            logits[0].append(_t)
+            logits[0] = torch.cat(logits[0], dim=0)
+
+            size = (1, logits[0].size(0), logits[0].size(1))
+            ts_logits = torch.Tensor().resize_(size).zero_()
+            ts_logits[0].copy_(logits[0])
+
+            _, n_sample, _ =  ts_logits.size()
+            max_preds, _ = ts_logits.max(dim=2, keepdim=False)
+
+            for i in range(n_sample):
+                if max_preds[0][i].item() >= threshold[1]:
+                    self.last_exited_stage = 2 
+                    for k in range(3, 4):
+                        outs.append(torch.zeros(*self.output_fmap_sizes[k]).cuda())
+            
+                    return y_early3, y_att, torch.zeros_like(y_att), torch.zeros_like(y_att), outs 
+
         x = self.cnn_body.block4(x)
 
         x_mean = self.avgpool(x)
         x_mean = x_mean.flatten(start_dim=1)
         y_cnn = self.classifier_cnn(x_mean)
+        
+        logits = [[] for _ in range(1)]
+        if threshold is not None:
+            _t = self.softmax(y_cnn)
+            logits[0].append(_t)
+            logits[0] = torch.cat(logits[0], dim=0)
 
+            size = (1, logits[0].size(0), logits[0].size(1))
+            ts_logits = torch.Tensor().resize_(size).zero_()
+            ts_logits[0].copy_(logits[0])
+
+            _, n_sample, _ =  ts_logits.size()
+            max_preds, _ = ts_logits.max(dim=2, keepdim=False)
+
+            for i in range(n_sample):
+                if max_preds[0][i].item() >= threshold[2]:
+                    self.last_exited_stage = 3
+                    outs.append(x)
+            
+                    return y_early3, y_att, y_cnn, torch.zeros_like(y_cnn), outs
 
         # cross attention from z to x
         if self.last_cross_att_z2x is not None:
@@ -516,6 +580,7 @@ class DynPerceiver(nn.Module):
             x_merge = torch.cat((x_mean, x_latent_mean), dim=1)
             y_merge = self.classifier_merge(x_merge)
 
+        """
         logits = [[] for _ in range(4)]
         if threshold is not None:
             output = [y_early3, y_att, y_cnn, y_merge]
@@ -540,6 +605,9 @@ class DynPerceiver(nn.Module):
                         self.last_exited_stage = k + 1 # 어느 스테이지에서 exit했는지 정보 필요. 1~4 range
                         for j in range(k+1, n_stage):
                             outs[j][i].zero_()
+        """
+        if threshold is not None:
+            self.last_exited_stage = 4
 
         return y_early3, y_att, y_cnn, y_merge, outs
 
