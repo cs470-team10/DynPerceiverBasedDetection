@@ -1,5 +1,6 @@
 _base_ = '../configs/regnet/retinanet_regnetx-3.2GF_fpn_1x_coco.py'
-dynamic_evaluate = True # Dynamic Evaluate를 사용할거면 true로 변경.
+dynamic_evaluate_on_training = True
+dynamic_evaluate_on_test = True
 
 custom_imports = dict(
     imports=['mmdet.models.backbones.dyn_perceiver_regnet_zeromap'],
@@ -25,8 +26,8 @@ custom_hooks = [
          log_checkpoint=True,
          log_model=True)
 ]
-val_cfg = dict(type='DynamicValLoop', dynamic_evaluate=dynamic_evaluate)
-test_cfg = dict(type='DynamicTestLoop', dynamic_evaluate=dynamic_evaluate)
+val_cfg = dict(type='DynamicValLoop', dynamic_evaluate=dynamic_evaluate_on_training)
+test_cfg = dict(type='DynamicTestLoop', dynamic_evaluate=dynamic_evaluate_on_test)
 test_dataloader = dict(
     dataset=dict(
         ann_file='annotations/singlebox_instances_val2017.json',

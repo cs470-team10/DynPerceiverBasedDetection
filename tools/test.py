@@ -149,7 +149,7 @@ def main():
 
     end_time = datetime.now() + timedelta(hours=9)
     print("[CS470] End Time: " + format(end_time, '%Y.%m.%d %H:%M:%S') + " (KST)")
-    print("[CS470] Takes " + str(timedelta(seconds=(end_time - start_time).seconds)))
+    print("[CS470] Takes " + str(timedelta(seconds=(end_time - start_time))))
 
 
 if __name__ == '__main__':

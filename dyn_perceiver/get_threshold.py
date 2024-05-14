@@ -1,22 +1,11 @@
-from torch.utils.data import DataLoader
-from typing import Tuple
 from mmengine.runner.amp import autocast
 from torch import Tensor
 import torch
 import torch.nn as nn
-import os
 import math
-import numpy as np
-from mmdet.structures import DetDataSample
-from mmdet.structures.bbox import HorizontalBoxes
-from mmdet.testing import demo_mm_inputs, get_detector_cfg
-
-# train_dataloader: COCO Trainset의 dataloader
-# model: DynRetinaNet 모델
-# fp16: 신경 안써도 됨. autocast만 켜고 하셈.
+from cs470_logger.cs470_print import cs470_print
 
 def generate_distribution(each_exit = False) -> Tensor:
-    # [CS470] 강우성: [TODO] train_dataloader랑 model(DynRetinaNet 참고) 보면서 threshold 구하는 method 만들기.
     probs_list = []
     if each_exit:
         for i in range(4):
@@ -50,14 +39,15 @@ def get_threshold(model, val_loader, fp16: bool):
         
         return_list = []
         for probs in probs_list:
-            print('\n*****************')
-            print(probs)
+            print("\n")
+            cs470_print('*****************')
+            cs470_print(str(probs))
             acc_val, T = tester.dynamic_eval_find_threshold(val_pred, val_target, probs)
             return_list.append(T)
-            print(T)
-            print('valid acc: {:.3f}'.format(acc_val))
+            cs470_print(str(T))
+            cs470_print('valid acc: {:.3f}'.format(acc_val))
         
-    print('----------ALL DONE-----------')
+    cs470_print('----------ALL DONE-----------')
     #print("Threshold list(get_threshold.py) :", return_list)
     return return_list
 
@@ -67,7 +57,7 @@ class Tester(object):
         self.model = model
         self.softmax = nn.Softmax(dim=1).cuda()
 
-    def calc_logit(self, dataloader, early_break=False):
+    def calc_logit(self, dataloader, early_break=False, max_images = 5000):
         
         self.model.backbone.eval()
         self.model.cuda()
@@ -76,7 +66,7 @@ class Tester(object):
         targets = []
         
         for idx, sample in enumerate(dataloader):
-            if early_break and idx > 5000:
+            if early_break and idx > max_images:
                 break
             
             target = sample['data_samples']
@@ -104,7 +94,7 @@ class Tester(object):
                     logits[b].append(_t)
                     
             if idx % 50 == 0:
-                print('Generate Logit: [{0}/{1}]'.format(idx, len(dataloader)))
+                cs470_print('Generate Logit: [{0}/{1}]'.format(idx, max(max_images, len(dataloader))))
         
         for b in range(n_stage):
             logits[b] = torch.cat(logits[b], dim=0)

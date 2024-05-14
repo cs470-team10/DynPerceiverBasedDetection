@@ -33,13 +33,6 @@ class DynPerceiverZeromap(BaseModule):
         # torch.Size([2, 144, 100, 152])
         # torch.Size([2, 320, 50, 76])
         # torch.Size([2, 784, 25, 38])
-        # [CS470] 김남우, [CS470] 이찬규: [TODO] 여기서 classifiers의 output은 [Batch Size, 80(COCO의 # of classes)]로 바뀌어야 합니다.
-        # 그래야 정완님이 threshold 비교할 때 사용할 수 있습니다.
-        # 남우님이랑 찬규님 중에 누가 할지 몰라서 일단 두 분 다 적었습니다.
-
-        # Warning) mapping에 의해서 dyn-perceiver train 시 back propagation에서 문제가 될수 있음.
-        # 현재는 1000->42 mapping이므로 불완전함.
-        # 따라서 현재의 output은 [Batch size, 42] 형태임.
         
         # mapping_file_path = './tools/dataset_converters/imagenet2coco.txt'
 

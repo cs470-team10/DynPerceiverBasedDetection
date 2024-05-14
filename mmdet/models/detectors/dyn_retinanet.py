@@ -142,15 +142,6 @@ class DynRetinaNet(SingleStageDetector):
     
     # Helper Functions
     def get_dynamic_flops(self, data_loader, num_images=10):
-        # [CS470] 김남우, [CS470] 이찬규: [TODO]
-        # 이건 뭐 별거는 아닌데, 우린 결국 flops별 accuarcy를 비교하는 것이니까
-        # 이에 대한 내장 함수 하나 있어도 좋을 것 같다는 생각이 들어 일단 파놨습니다.
-        # 각각 early exiting되는 stage에 따라 flops 계산하는 로직 넣어두면
-        # 좋지 않을까요?
-        # 
-        # tools/analysis_tools/get_flops.py 참고해서 작성하면 좋을 듯 합니다.
-        # Threshold 넣는법: self.backbone.set_threshold(원하는 threshold(Torch.tensor ([-1, 0 , 0 , 0])))
-        # 다 쓰고 return 하시기 전에 꼭 self.backbone.unset_threshold()
         thresholds = torch.tensor([
             [-1, 10, 10, 10],
             [10, -1, 10, 10],
@@ -184,8 +175,6 @@ class DynRetinaNet(SingleStageDetector):
         cs470_print("Flops per early exiting stages: " + str(flops.tolist()))
         return flops
     
-    # [CS470] 강우성: 너가 찾아둔 thresholds는 여기로 들어가서 정완님이 사용
-    # [CS470] 이정완: 우성이 것 참고하시면 됩니다.
     def set_threshold(self, threshold):
         self.backbone.set_threshold(threshold)
     

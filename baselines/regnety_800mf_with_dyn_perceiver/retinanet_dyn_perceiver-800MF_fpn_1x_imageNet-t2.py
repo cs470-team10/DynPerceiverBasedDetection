@@ -1,6 +1,5 @@
 _base_ = '../../configs/regnet/retinanet_regnetx-3.2GF_fpn_1x_coco.py'
 
-# [CS470] 강우성, [CS470] 이정완: dynamic_evaluate를 True로 변경하면 Dynamic Evaluation이 실행됩니다.
 dynamic_evaluate = False # Dynamic Evaluate를 사용할거면 true로 변경.
 
 custom_imports = dict(
