@@ -111,12 +111,16 @@ nohup python3 tools/train.py \
 # Train improvements
 
 nohup python3 tools/train.py \
-    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-theta_factor_0.3.py \
-    --auto-scale-lr > theta_factor_0.3-train.out &
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-theta_factor_3e-1.py \
+    --auto-scale-lr > theta_factor_3e-1-train.out &
 
 nohup python3 tools/train.py \
-    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-theta_factor_0.1.py \
-    --auto-scale-lr > theta_factor_0.1-train.out &
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-theta_factor_1e-1.py \
+    --auto-scale-lr > theta_factor_1e-1-train.out &
+
+nohup python3 tools/train.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-theta_factor_5e-2.py \
+    --auto-scale-lr > theta_factor_5e-2-train.out &
 
 nohup python3 tools/train.py \
     improvements/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-theta_factor_1e-2.py \
