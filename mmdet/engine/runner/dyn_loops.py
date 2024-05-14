@@ -18,18 +18,19 @@ class DynamicValLoop(ValLoop):
                  dataloader: Union[DataLoader, Dict],
                  evaluator: Union[Evaluator, Dict, List],
                  fp16: bool = False,
-                 dynamic_evaluate: bool = False):
+                 dynamic_evaluate_epoch: List[int] = []):
         super().__init__(runner, dataloader, evaluator, fp16)
-        cs470_print("Dynamic Validation")
-        self.dynamic_evaluate = dynamic_evaluate
-        if self.dynamic_evaluate:
+        self.dynamic_evaluate_epoch = dynamic_evaluate_epoch
+        if len(self.dynamic_evaluate_epoch) > 0:
             self.get_flops()
 
     def run(self) -> dict:
         self.runner.call_hook('before_val')
         self.runner.call_hook('before_val_epoch')
         self.runner.model.eval()
+        self.get_dynamic_evalute()
         if self.dynamic_evaluate:
+            cs470_print("Dynamic Evaluation")
             self.evaluate_logger = DynamicValidationLogger(self.runner._log_dir, self.flops, self.runner.train_loop.epoch)
             self.get_threshold_and_flops()
             for _index, threshold in enumerate(self.thresholds):
@@ -73,6 +74,9 @@ class DynamicValLoop(ValLoop):
     def unset_threshold(self):
         self.runner.model.unset_threshold()
 
+    def get_dynamic_evalute(self):
+        self.dynamic_evaluate = self.runner.train_loop.epoch in self.dynamic_evaluate_epoch
+
 @LOOPS.register_module()
 class DynamicTestLoop(TestLoop):
     def __init__(self,
@@ -82,7 +86,6 @@ class DynamicTestLoop(TestLoop):
                  fp16: bool = False,
                  dynamic_evaluate: bool = False):
         super().__init__(runner, dataloader, evaluator, fp16)
-        cs470_print("Dynamic Test")
         self.dynamic_evaluate = dynamic_evaluate
         if self.dynamic_evaluate:
             self.get_flops()
@@ -92,6 +95,7 @@ class DynamicTestLoop(TestLoop):
         self.runner.call_hook('before_test_epoch')
         self.runner.model.eval()
         if self.dynamic_evaluate:
+            cs470_print("Dynamic Evaluation")
             self.evaluate_logger = DynamicEvaluationLogger(self.runner._log_dir, self.flops)
             self.get_threshold_and_flops()
             for _index, threshold in enumerate(self.thresholds):

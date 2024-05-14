@@ -1,5 +1,5 @@
 _base_ = '../configs/regnet/retinanet_regnetx-3.2GF_fpn_1x_coco.py'
-dynamic_evaluate_on_training = True
+dynamic_evaluate_epoch = [1, 12] # Training 때 dynamic evaluation을 할 epoch. 안할거면 [], 다할거면 [i + 1 for i in range(12)]
 dynamic_evaluate_on_test = True
 
 custom_imports = dict(
@@ -26,7 +26,7 @@ custom_hooks = [
          log_checkpoint=True,
          log_model=True)
 ]
-val_cfg = dict(type='DynamicValLoop', dynamic_evaluate=dynamic_evaluate_on_training)
+val_cfg = dict(type='DynamicValLoop', dynamic_evaluate_epoch=dynamic_evaluate_epoch)
 test_cfg = dict(type='DynamicTestLoop', dynamic_evaluate=dynamic_evaluate_on_test)
 test_dataloader = dict(
     dataset=dict(

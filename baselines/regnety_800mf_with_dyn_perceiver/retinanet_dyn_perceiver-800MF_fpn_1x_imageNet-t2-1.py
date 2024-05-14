@@ -25,5 +25,5 @@ custom_hooks = [
          log_checkpoint=True,
          log_model=True)
 ]
-val_cfg = dict(type='DynamicValLoop', dynamic_evaluate=dynamic_evaluate)
+val_cfg = dict(type='DynamicValLoop')
 test_cfg = dict(type='DynamicTestLoop', dynamic_evaluate=dynamic_evaluate)
