@@ -28,13 +28,15 @@ class DynamicValLoop(ValLoop):
         super().__init__(runner, dataloader, evaluator, fp16)
         cs470_print("Dynamic Validation")
         self.dynamic_evaluate = dynamic_evaluate
+        if self.dynamic_evaluate:
+            self.get_flops()
 
     def run(self) -> dict:
         self.runner.call_hook('before_val')
         self.runner.call_hook('before_val_epoch')
         self.runner.model.eval()
         if self.dynamic_evaluate:
-            self.evaluate_logger = DynamicValidationLogger(self.runner._log_dir, self.runner.train_loop.epoch)
+            self.evaluate_logger = DynamicValidationLogger(self.runner._log_dir, self.flops, self.runner.train_loop.epoch)
             # [CS470] 강우성: 아래의 함수에서 threshold 계산해서 연결해줌. 딱히 건들 필요는 ㄴㄴ
             self.get_threshold_and_flops()
             # [CS470] 이정완: [TODO] 여기서 threshold별 mAP 구해야합니다. run_ter 참조.
@@ -63,14 +65,14 @@ class DynamicValLoop(ValLoop):
     
     @torch.no_grad()
     def get_threshold_and_flops(self):
-        # [CS470] 강우성: threshold는 아래의 method를 통해 DynRetinaNet에 전달.
-        # [CS470] 이정완: flops는 early exiting stage별 flops를 계산한 결과가 전달됩니다.
         self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.fp16)
         cs470_print("Thresholds: " + str([threshold.tolist() for threshold in self.thresholds]))
-        self.flops = self.runner.model.get_dynamic_flops(data_loader=self.dataloader)
         cs470_print("Flops per early exiting stages: " + str(self.flops.tolist()))
         self.evaluate_logger.add_flops(self.flops)
         return
+    
+    def get_flops(self):
+        self.flops = self.runner.model.get_dynamic_flops(data_loader=self.dataloader)
     
     def get_last_exited_stage(self):
         return self.runner.model.backbone.get_last_exited_stage()
@@ -92,13 +94,15 @@ class DynamicTestLoop(TestLoop):
         super().__init__(runner, dataloader, evaluator, fp16)
         cs470_print("Dynamic Test")
         self.dynamic_evaluate = dynamic_evaluate
+        if self.dynamic_evaluate:
+            self.get_flops()
 
     def run(self) -> dict:
         self.runner.call_hook('before_test')
         self.runner.call_hook('before_test_epoch')
         self.runner.model.eval()
         if self.dynamic_evaluate:
-            self.evaluate_logger = DynamicEvaluationLogger(self.runner._log_dir)
+            self.evaluate_logger = DynamicEvaluationLogger(self.runner._log_dir, self.flops)
             # [CS470] 강우성: 아래의 함수에서 threshold 계산해서 연결해줌. 딱히 건들 필요는 ㄴㄴ
             self.get_threshold_and_flops()
             # [CS470] 이정완: [TODO] 여기서 threshold별 mAP 구해야합니다. run_ter 참조.
@@ -127,14 +131,13 @@ class DynamicTestLoop(TestLoop):
     
     @torch.no_grad()
     def get_threshold_and_flops(self):
-        # [CS470] 강우성: threshold는 아래의 method를 통해 DynRetinaNet에 전달.
-        # [CS470] 이정완: flops는 early exiting stage별 flops를 계산한 결과가 전달됩니다.
         self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.fp16)
         cs470_print("Thresholds: " + str([threshold.tolist() for threshold in self.thresholds]))
-        self.flops = self.runner.model.get_dynamic_flops(data_loader=self.dataloader)
         cs470_print("Flops per early exiting stages: " + str(self.flops.tolist()))
-        self.evaluate_logger.add_flops(self.flops)
         return
+    
+    def get_flops(self):
+        self.flops = self.runner.model.get_dynamic_flops(data_loader=self.dataloader)
     
     def get_last_exited_stage(self):
         return self.runner.model.backbone.get_last_exited_stage()

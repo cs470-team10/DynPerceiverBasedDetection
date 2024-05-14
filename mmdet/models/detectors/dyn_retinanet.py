@@ -141,7 +141,7 @@ class DynRetinaNet(SingleStageDetector):
         return x, y_early3, y_att, y_cnn, y_merge
     
     # Helper Functions
-    def get_dynamic_flops(self, data_loader, num_images=5):
+    def get_dynamic_flops(self, data_loader, num_images=10):
         # [CS470] 김남우, [CS470] 이찬규: [TODO]
         # 이건 뭐 별거는 아닌데, 우린 결국 flops별 accuarcy를 비교하는 것이니까
         # 이에 대한 내장 함수 하나 있어도 좋을 것 같다는 생각이 들어 일단 파놨습니다.
@@ -180,8 +180,9 @@ class DynRetinaNet(SingleStageDetector):
             mean_flops = int(np.average(avg_flops))
             flops_list.append(mean_flops)
             model.unset_threshold()
-
-        return torch.tensor(flops_list)
+        flops = torch.tensor(flops_list)
+        cs470_print("Flops per early exiting stages: " + str(flops.tolist()))
+        return flops
     
     # [CS470] 강우성: 너가 찾아둔 thresholds는 여기로 들어가서 정완님이 사용
     # [CS470] 이정완: 우성이 것 참고하시면 됩니다.
