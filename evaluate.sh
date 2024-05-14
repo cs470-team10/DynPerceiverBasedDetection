@@ -107,3 +107,33 @@ nohup python3 tools/train.py \
 nohup python3 tools/train.py \
     baselines/regnety_800mf_with_dyn_perceiver/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-debug.py \
     --auto-scale-lr > debug.out &
+
+# Train improvements
+
+nohup python3 tools/train.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-theta_factor_0.3.py \
+    --auto-scale-lr > theta_factor_0.3-train.out &
+
+nohup python3 tools/train.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-theta_factor_0.1.py \
+    --auto-scale-lr > theta_factor_0.1-train.out &
+
+nohup python3 tools/train.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-theta_factor_1e-2.py \
+    --auto-scale-lr > theta_factor_1e-2-train.out &
+
+nohup python3 tools/train.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-theta_factor_5e-3.py \
+    --auto-scale-lr > theta_factor_5e-3-train.out &
+
+nohup python3 tools/train.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-theta_factor_1e-3.py \
+    --auto-scale-lr > theta_factor_1e-3-train.out &
+
+nohup python3 tools/train.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-theta_factor_5e-4.py \
+    --auto-scale-lr > theta_factor_5e-4-train.out &
+
+nohup python3 tools/train.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_imageNet-theta_factor_1e-4.py \
+    --auto-scale-lr > theta_factor_1e-4-train.out &

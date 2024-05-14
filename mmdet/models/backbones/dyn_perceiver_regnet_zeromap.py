@@ -60,7 +60,7 @@ class DynPerceiverZeromap(BaseModule):
         #                 mapping[i] = coco_index[coco_label]
         #         i += 1
 
-        # #cs470_debug_print("# of mapped COCO labels :", coco_counter)
+        # ## cs470_debug_print("# of mapped COCO labels :", coco_counter)
 
         # batch_size = y_early3.size(0)
         # coco_y = []
@@ -93,10 +93,10 @@ class DynPerceiverZeromap(BaseModule):
         for name, param in self.dyn_perceiver.named_parameters():
             # cnn stem and conv block
             if 'cnn_stem' in name:
-                cs470_debug_print(f"{name} freezed!")
+                # cs470_debug_print(f"{name} freezed!")
                 param.requires_grad = False
             if f"cnn_body.block1" in name:
-                cs470_debug_print(f"{name} freezed!")
+                # cs470_debug_print(f"{name} freezed!")
                 param.requires_grad = False
             
             # classification branch(x2z, z2x, self attention, token mixer, expander; ~ stage 1 범위)
@@ -109,13 +109,13 @@ class DynPerceiverZeromap(BaseModule):
                         (f"token_mixer.{str(i - 1)}." in name) or \
                         (f"token_expander.{str(i - 1)}." in name) or \
                         (f"cross_att{str(i + 1)}_z2x" in name):
-                    cs470_debug_print(f"{name} freezed!")
+                    # cs470_debug_print(f"{name} freezed!")
                     param.requires_grad = False
             
             # classification branch(x2z, z2x, self attention, token mixer, expander, latent; ~ stage 1 범위)
             if test_num == 3:
                 if "latent" in name:
-                    cs470_debug_print(f"{name} freezed!")
+                    # cs470_debug_print(f"{name} freezed!")
                     param.requires_grad = False
                 # stage 1
                 i = 1
@@ -125,13 +125,13 @@ class DynPerceiverZeromap(BaseModule):
                         (f"token_mixer.{str(i - 1)}." in name) or \
                         (f"token_expander.{str(i - 1)}." in name) or \
                         (f"cross_att{str(i + 1)}_z2x" in name):
-                    cs470_debug_print(f"{name} freezed!")
+                    # cs470_debug_print(f"{name} freezed!")
                     param.requires_grad = False
             
             # classification branch(x2z, z2x, self attention, token mixer, expander, latent; 전체 범위)
             if test_num == 4:
                 if "latent" in name:
-                    cs470_debug_print(f"{name} freezed!")
+                    # cs470_debug_print(f"{name} freezed!")
                     param.requires_grad = False
                 # stage 1
                 i = 1
@@ -141,7 +141,7 @@ class DynPerceiverZeromap(BaseModule):
                         (f"token_mixer.{str(i - 1)}." in name) or \
                         (f"token_expander.{str(i - 1)}." in name) or \
                         (f"cross_att{str(i + 1)}_z2x" in name):
-                    cs470_debug_print(f"{name} freezed!")
+                    # cs470_debug_print(f"{name} freezed!")
                     param.requires_grad = False
                 # stage 2
                 i = 2
@@ -151,7 +151,7 @@ class DynPerceiverZeromap(BaseModule):
                         (f"token_mixer.{str(i - 1)}." in name) or \
                         (f"token_expander.{str(i - 1)}." in name) or \
                         (f"cross_att{str(i + 1)}_z2x" in name):
-                    cs470_debug_print(f"{name} freezed!")
+                    # cs470_debug_print(f"{name} freezed!")
                     param.requires_grad = False
                 # stage 3
                 i = 3
@@ -161,7 +161,7 @@ class DynPerceiverZeromap(BaseModule):
                         (f"token_mixer.{str(i - 1)}." in name) or \
                         (f"token_expander.{str(i - 1)}." in name) or \
                         (f"cross_att{str(i + 1)}_z2x" in name):
-                    cs470_debug_print(f"{name} freezed!")
+                    # cs470_debug_print(f"{name} freezed!")
                     param.requires_grad = False
                 # stage 4
                 i = 4
@@ -169,76 +169,76 @@ class DynPerceiverZeromap(BaseModule):
                         (f"cross_att{str(i)}_x2z" in name) or \
                         (f"self_att{str(i)}" in name) or \
                         (f"last_cross_att_z2x" in name):
-                    cs470_debug_print(f"{name} freezed!")
+                    # cs470_debug_print(f"{name} freezed!")
                     param.requires_grad = False
             
         self.dyn_perceiver.cnn_stem.eval()
-        cs470_debug_print("cnn_stem evaluation mode!")
+        # cs470_debug_print("cnn_stem evaluation mode!")
         self.dyn_perceiver.cnn_body.block1.eval()
-        cs470_debug_print("cnn_body.block1 evaluation mode!")
+        # cs470_debug_print("cnn_body.block1 evaluation mode!")
         if test_num == 2 or test_num == 3:
             # stage 1
             self.dyn_perceiver.dwc1_x2z.eval()
-            cs470_debug_print("dwc1_x2z evaluation mode!")
+            # cs470_debug_print("dwc1_x2z evaluation mode!")
             self.dyn_perceiver.cross_att1_x2z.eval()
-            cs470_debug_print("cross_att1_x2z evaluation mode!")
+            # cs470_debug_print("cross_att1_x2z evaluation mode!")
             self.dyn_perceiver.self_att1.eval()
-            cs470_debug_print("self_att1 evaluation mode!")
+            # cs470_debug_print("self_att1 evaluation mode!")
             self.dyn_perceiver.token_mixer[0].eval()
-            cs470_debug_print("token_mixer.0 evaluation mode!")
+            # cs470_debug_print("token_mixer.0 evaluation mode!")
             self.dyn_perceiver.token_expander[0].eval()
-            cs470_debug_print("token_expander.0 evaluation mode!")
+            # cs470_debug_print("token_expander.0 evaluation mode!")
             self.dyn_perceiver.cross_att2_z2x.eval()
-            cs470_debug_print("cross_att2_z2x evaluation mode!")
+            # cs470_debug_print("cross_att2_z2x evaluation mode!")
         if test_num == 4:
             # stage 1
             self.dyn_perceiver.dwc1_x2z.eval()
-            cs470_debug_print("dwc1_x2z evaluation mode!")
+            # cs470_debug_print("dwc1_x2z evaluation mode!")
             self.dyn_perceiver.cross_att1_x2z.eval()
-            cs470_debug_print("cross_att1_x2z evaluation mode!")
+            # cs470_debug_print("cross_att1_x2z evaluation mode!")
             self.dyn_perceiver.self_att1.eval()
-            cs470_debug_print("self_att1 evaluation mode!")
+            # cs470_debug_print("self_att1 evaluation mode!")
             self.dyn_perceiver.token_mixer[0].eval()
-            cs470_debug_print("token_mixer.0 evaluation mode!")
+            # cs470_debug_print("token_mixer.0 evaluation mode!")
             self.dyn_perceiver.token_expander[0].eval()
-            cs470_debug_print("token_expander.0 evaluation mode!")
+            # cs470_debug_print("token_expander.0 evaluation mode!")
             self.dyn_perceiver.cross_att2_z2x.eval()
-            cs470_debug_print("cross_att2_z2x evaluation mode!")
+            # cs470_debug_print("cross_att2_z2x evaluation mode!")
 
             # stage 2
             self.dyn_perceiver.dwc2_x2z.eval()
-            cs470_debug_print("dwc2_x2z evaluation mode!")
+            # cs470_debug_print("dwc2_x2z evaluation mode!")
             self.dyn_perceiver.cross_att2_x2z.eval()
-            cs470_debug_print("cross_att2_x2z evaluation mode!")
+            # cs470_debug_print("cross_att2_x2z evaluation mode!")
             self.dyn_perceiver.self_att2.eval()
-            cs470_debug_print("self_att2 evaluation mode!")
+            # cs470_debug_print("self_att2 evaluation mode!")
             self.dyn_perceiver.token_mixer[1].eval()
-            cs470_debug_print("token_mixer.1 evaluation mode!")
+            # cs470_debug_print("token_mixer.1 evaluation mode!")
             self.dyn_perceiver.token_expander[1].eval()
-            cs470_debug_print("token_expander.1 evaluation mode!")
+            # cs470_debug_print("token_expander.1 evaluation mode!")
             self.dyn_perceiver.cross_att3_z2x.eval()
-            cs470_debug_print("cross_att3_z2x evaluation mode!")
+            # cs470_debug_print("cross_att3_z2x evaluation mode!")
 
             # stage 3
             self.dyn_perceiver.dwc3_x2z.eval()
-            cs470_debug_print("dwc3_x2z evaluation mode!")
+            # cs470_debug_print("dwc3_x2z evaluation mode!")
             self.dyn_perceiver.cross_att3_x2z.eval()
-            cs470_debug_print("cross_att3_x2z evaluation mode!")
+            # cs470_debug_print("cross_att3_x2z evaluation mode!")
             self.dyn_perceiver.self_att3.eval()
-            cs470_debug_print("self_att3 evaluation mode!")
+            # cs470_debug_print("self_att3 evaluation mode!")
             self.dyn_perceiver.token_mixer[2].eval()
-            cs470_debug_print("token_mixer.2 evaluation mode!")
+            # cs470_debug_print("token_mixer.2 evaluation mode!")
             self.dyn_perceiver.token_expander[2].eval()
-            cs470_debug_print("token_expander.2 evaluation mode!")
+            # cs470_debug_print("token_expander.2 evaluation mode!")
             self.dyn_perceiver.cross_att4_z2x.eval()
-            cs470_debug_print("cross_att4_z2x evaluation mode!")
+            # cs470_debug_print("cross_att4_z2x evaluation mode!")
 
             # stage 4
             self.dyn_perceiver.dwc4_x2z.eval()
-            cs470_debug_print("dwc3_x2z evaluation mode!")
+            # cs470_debug_print("dwc3_x2z evaluation mode!")
             self.dyn_perceiver.cross_att4_x2z.eval()
-            cs470_debug_print("cross_att4_x2z evaluation mode!")
+            # cs470_debug_print("cross_att4_x2z evaluation mode!")
             self.dyn_perceiver.self_att4.eval()
-            cs470_debug_print("self_att4 evaluation mode!")
+            # cs470_debug_print("self_att4 evaluation mode!")
             self.dyn_perceiver.last_cross_att_z2x.eval()
-            cs470_debug_print("last_cross_att_z2x evaluation mode!")
+            # cs470_debug_print("last_cross_att_z2x evaluation mode!")

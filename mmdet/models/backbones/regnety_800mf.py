@@ -37,12 +37,12 @@ class RegNetY800MF(BaseModule):
         for name, param in self.named_parameters():
             # cnn stem and conv block
             if 'cnn_stem' in name:
-                cs470_debug_print(f"{name} freezed!")
+                # cs470_debug_print(f"{name} freezed!")
                 param.requires_grad = False
             if f"cnn_body.block1" in name:
-                cs470_debug_print(f"{name} freezed!")
+                # cs470_debug_print(f"{name} freezed!")
                 param.requires_grad = False
         self.cnn_stem.eval()
-        cs470_debug_print("cnn_stem evaluation mode!")
+        # cs470_debug_print("cnn_stem evaluation mode!")
         self.cnn_body.block1.eval()
-        cs470_debug_print("cnn_body.block1 evaluation mode!")
+        # cs470_debug_print("cnn_body.block1 evaluation mode!")
