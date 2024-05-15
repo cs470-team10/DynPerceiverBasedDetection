@@ -48,6 +48,7 @@ def get_threshold(model, val_loader, fp16: bool):
             cs470_print('valid acc: {:.3f}'.format(acc_val))
         
     cs470_print('----------ALL DONE-----------')
+    return_list.append(torch.tensor([1,1,1,-1]))
     #print("Threshold list(get_threshold.py) :", return_list)
     return return_list
 
