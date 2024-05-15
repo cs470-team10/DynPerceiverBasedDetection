@@ -37,6 +37,14 @@ python3 tools/analysis_tools/get_flops.py baselines/regnety_800mf_with_dyn_perce
 # Train improvements
 
 nohup python3 tools/train.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_5e-1.py \
+    --auto-scale-lr > theta_factor_5e-1-train.out &
+
+nohup python3 tools/train.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_4e-1.py \
+    --auto-scale-lr > theta_factor_4e-1-train.out &
+
+nohup python3 tools/train.py \
     improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_3e-1.py \
     --auto-scale-lr > theta_factor_3e-1-train.out &
 
