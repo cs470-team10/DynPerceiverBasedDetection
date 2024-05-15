@@ -42,9 +42,11 @@ class DynRetinaNet(SingleStageDetector):
         if self.bbox_head.loss_dyn is not None:
             self.loss_earlyexit = True
             self.theta_factor = self.bbox_head.loss_dyn.theta_factor
+            self.lambda_factor = self.bbox_head.loss_dyn.lambda_factor
         else:
             self.loss_earlyexit = False
             self.theta_factor = 0
+            self.lambda_factor = 0
         self.metrics = []
     
     # Loss functions
@@ -84,7 +86,7 @@ class DynRetinaNet(SingleStageDetector):
 
         if earlyexit_loss != 0:
             log_vars.append([earlyexit_loss_name, earlyexit_loss])
-            loss = loss + self.theta_factor * earlyexit_loss
+            loss = self.lambda_factor * loss + self.theta_factor * earlyexit_loss
 
         log_vars.insert(0, ['loss', loss])
         log_vars = OrderedDict(log_vars)

@@ -14,7 +14,9 @@ model = dict(
                       checkpoint='./baselines/regnety_800mf_with_dyn_perceiver/reg800m_perceiver_t128_converted.pth')),
     neck=dict(in_channels=[64, 144, 320, 784]),
     bbox_head=dict(
-        loss_dyn=dict(theta_factor=5e-4, type='DynLoss'),
+        loss_dyn=dict(theta_factor=5e-4,
+                      lambda_factor=1-5e-4,
+                       type='DynLoss'),
         type='DynRetinaHead'),
     type='DynRetinaNet'
 )

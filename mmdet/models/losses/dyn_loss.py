@@ -12,6 +12,7 @@ class DynLoss(nn.Module):
 
     def __init__(self,
                  theta_factor,
+                 lambda_factor,
                  mixup_fn=None,
                  smoothing_=0,
                  loss_cnn_factor=0.25,
@@ -28,6 +29,7 @@ class DynLoss(nn.Module):
         self.loss_att_factor = loss_att_factor
         self.loss_merge_factor = loss_merge_factor
         self.theta_factor = theta_factor
+        self.lambda_factor = lambda_factor
         self.with_kd = with_kd
         self.T_kd=T_kd
         self.alpha_kd=alpha_kd
