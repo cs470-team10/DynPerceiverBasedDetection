@@ -84,7 +84,7 @@ class DynRetinaNet(SingleStageDetector):
 
         if earlyexit_loss != 0:
             log_vars.append([earlyexit_loss_name, earlyexit_loss])
-            loss = (1 - self.theta_factor) * loss + self.theta_factor * earlyexit_loss
+            loss = loss + self.theta_factor * earlyexit_loss
 
         log_vars.insert(0, ['loss', loss])
         log_vars = OrderedDict(log_vars)
