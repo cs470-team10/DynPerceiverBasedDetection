@@ -1,18 +1,14 @@
 _base_ = '../../configs/regnet/retinanet_regnetx-3.2GF_fpn_1x_coco.py'
 custom_imports = dict(
-    imports=['mmdet.models.backbones.dyn_perceiver_regnet_baseline'],
+    imports=['mmdet.models.backbones.regnety_800mf'],
     allow_failed_imports=False)
 model = dict(
     backbone=dict(
-        type='DynPerceiverBaseline',
+        type='RegNetY800MF',
         init_cfg=dict(type='Pretrained', 
-                      checkpoint='./baselines/regnety_800mf_with_dyn_perceiver/reg800m_perceiver_t128_converted.pth')),
-    neck=dict(
-        type='FPN',
-        # in_channels=[64, 128, 288, 672],
-        in_channels=[64, 144, 320, 784],
-        out_channels=256,
-        num_outs=5))
+                      checkpoint='./baselines/regnety_800mf_wo_dyn_perceiver/regnet_y_800mf-converted.pth')),
+    neck=dict(in_channels=[64, 144, 320, 784])
+)
 
 custom_hooks = [
     dict(type='WandbLoggerHook',

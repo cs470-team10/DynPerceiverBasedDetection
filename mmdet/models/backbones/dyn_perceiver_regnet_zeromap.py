@@ -5,9 +5,9 @@ from mmengine.model import BaseModule
 from cs470_logger.cs470_debug_print import cs470_debug_print
 
 @MODELS.register_module()
-class DynPerceiverBaseline(BaseModule):
+class DynPerceiverZeromap(BaseModule):
     def __init__(self, init_cfg, test_num, num_classes=1000, **args):
-        super(DynPerceiverBaseline, self).__init__(init_cfg)
+        super(DynPerceiverZeromap, self).__init__(init_cfg)
         self.dyn_perceiver = DynPerceiver(
             num_latents=128,
             num_classes=num_classes,
@@ -27,13 +27,46 @@ class DynPerceiverBaseline(BaseModule):
         self.threshold = None
 
     def forward(self, x):
-        y_early3, y_att, y_cnn, y_merge, outs = self.dyn_perceiver.forward(x)
+        y_early3, y_att, y_cnn, y_merge, outs = self.dyn_perceiver.forward(x, threshold=self.threshold)
+        return outs, y_early3, y_att, y_cnn, y_merge
         # torch.Size([2, 64, 200, 304])
         # torch.Size([2, 144, 100, 152])
         # torch.Size([2, 320, 50, 76])
         # torch.Size([2, 784, 25, 38])
-        return outs, y_early3, y_att, y_cnn, y_merge
-    
+        
+        # mapping_file_path = './tools/dataset_converters/imagenet2coco.txt'
+
+        # mapping = {}
+        # coco_index = {}
+        # coco_counter = 0
+
+        # with open(mapping_file_path, 'r') as file:
+        #     i=0
+        #     for line in file:
+        #         parts = line.strip().split('\t')
+        #         if len(parts) ==3:
+        #             imagenet_id, imagenet_label, coco_label = parts
+        #             if coco_label != 'None':
+        #                 if coco_label not in coco_index:
+        #                     coco_index[coco_label] = coco_counter
+        #                     coco_counter += 1
+        #                 mapping[i] = coco_index[coco_label]
+        #         i += 1
+
+        # ## cs470_debug_print("# of mapped COCO labels :", coco_counter)
+
+        # batch_size = y_early3.size(0)
+        # coco_y = []
+        # for each_y in [y_early3, y_att, y_cnn, y_merge]:
+        #     y_coco = torch.zeros(batch_size, coco_counter, dtype=each_y.dtype, device=each_y.device)
+        #     for imagenet_idx, coco_index in mapping.items():
+        #         y_coco[:, coco_index] += each_y[:, imagenet_idx]
+        #     coco_y.append(y_coco)
+        
+        # return outs, coco_y[0], coco_y[1], coco_y[2], coco_y[3]
+        
+        #return outs, y_early3, y_att, y_cnn, y_merge
+        
     def set_threshold(self, threshold):
         self.threshold = threshold
     
@@ -46,7 +79,7 @@ class DynPerceiverBaseline(BaseModule):
     def train(self, mode=True):
         self.dyn_perceiver.train(mode)
         self._freeze_stages()
-
+    
     def _freeze_stages(self):
         # freeze stages
         test_num = self.test_num

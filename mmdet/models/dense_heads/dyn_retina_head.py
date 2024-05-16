@@ -4,10 +4,21 @@ from mmcv.cnn import ConvModule
 
 from mmdet.registry import MODELS
 from .anchor_head import AnchorHead
+from torch import Tensor
+import torch
+
+from mmdet.structures.bbox import cat_boxes
+from mmdet.structures import SampleList
+
+from mmdet.utils import (InstanceList, OptInstanceList, ConfigType)
+
+from ..utils import images_to_levels, multi_apply, unpack_gt_instances
+from typing import List, Tuple
+import torch.nn.functional as F
 
 
 @MODELS.register_module()
-class RetinaHead(AnchorHead):
+class DynRetinaHead(AnchorHead):
     r"""An anchor-based head used in `RetinaNet
     <https://arxiv.org/pdf/1708.02002.pdf>`_.
 
@@ -47,19 +58,25 @@ class RetinaHead(AnchorHead):
                          name='retina_cls',
                          std=0.01,
                          bias_prob=0.01)),
-                 **kwargs):
+                loss_dyn: ConfigType = None,
+                 **kwargs
+                 ):
         assert stacked_convs >= 0, \
             '`stacked_convs` must be non-negative integers, ' \
             f'but got {stacked_convs} instead.'
         self.stacked_convs = stacked_convs
         self.conv_cfg = conv_cfg
         self.norm_cfg = norm_cfg
-        super(RetinaHead, self).__init__(
+        super(DynRetinaHead, self).__init__(
             num_classes,
             in_channels,
             anchor_generator=anchor_generator,
             init_cfg=init_cfg,
             **kwargs)
+        if loss_dyn is not None:
+            self.loss_dyn = MODELS.build(loss_dyn)
+        else:
+            self.loss_dyn = None
 
     def _init_layers(self):
         """Initialize layers of the head."""
@@ -121,3 +138,71 @@ class RetinaHead(AnchorHead):
         # print("cls_score: " + str(list(cls_score.size())))
         # print("bbox_pred: " + str(list(bbox_pred.size())))
         return cls_score, bbox_pred
+    
+    def loss(self, x: Tuple[Tensor], batch_data_samples: SampleList, earlyexit_preds = None) -> dict:
+        outs = self(x)
+
+        outputs = unpack_gt_instances(batch_data_samples)
+        (batch_gt_instances, batch_gt_instances_ignore,
+         batch_img_metas) = outputs
+
+        loss_inputs = outs + (batch_gt_instances, batch_img_metas,
+                              batch_gt_instances_ignore, earlyexit_preds)
+        losses = self.loss_by_feat(*loss_inputs)
+        return losses
+
+    def loss_by_feat(
+            self,
+            cls_scores: List[Tensor],
+            bbox_preds: List[Tensor],
+            batch_gt_instances: InstanceList,
+            batch_img_metas: List[dict],
+            batch_gt_instances_ignore: OptInstanceList = None,
+            earlyexit_preds = None) -> dict:
+
+        featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
+        assert len(featmap_sizes) == self.prior_generator.num_levels
+
+        device = cls_scores[0].device
+
+        anchor_list, valid_flag_list = self.get_anchors(
+            featmap_sizes, batch_img_metas, device=device)
+        cls_reg_targets = self.get_targets(
+            anchor_list,
+            valid_flag_list,
+            batch_gt_instances,
+            batch_img_metas,
+            batch_gt_instances_ignore=batch_gt_instances_ignore)
+        (labels_list, label_weights_list, bbox_targets_list, bbox_weights_list,
+         avg_factor) = cls_reg_targets
+
+        # anchor number of multi levels
+        num_level_anchors = [anchors.size(0) for anchors in anchor_list[0]]
+        # concat all level anchors and flags to a single tensor
+        concat_anchor_list = []
+        for i in range(len(anchor_list)):
+            concat_anchor_list.append(cat_boxes(anchor_list[i]))
+        all_anchor_list = images_to_levels(concat_anchor_list,
+                                           num_level_anchors)
+
+        losses_cls, losses_bbox = multi_apply(
+            self.loss_by_feat_single,
+            cls_scores,
+            bbox_preds,
+            all_anchor_list,
+            labels_list,
+            label_weights_list,
+            bbox_targets_list,
+            bbox_weights_list,
+            avg_factor=avg_factor)
+        if self.loss_dyn is None:
+            return dict(loss_cls=losses_cls, loss_bbox=losses_bbox)
+        else:
+            loss_earlyexit = self.loss_dyn(earlyexit_preds, self.get_earlyexit_target(batch_gt_instances))
+            return dict(loss_cls=losses_cls, loss_bbox=losses_bbox, loss_earlyexit=loss_earlyexit)
+
+    def get_earlyexit_target(self, batch_gt_instances: InstanceList) -> Tensor:
+        labels = []
+        for t in batch_gt_instances:
+            labels.append(t.labels.tolist()[0])
+        return F.one_hot(torch.tensor(labels), num_classes=self.num_classes).float().cuda()

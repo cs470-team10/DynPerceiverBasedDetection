@@ -146,4 +146,6 @@ class SingleStageDetector(BaseDetector):
         x = self.backbone(batch_inputs)
         if self.with_neck:
             x = self.neck(x)
+            # for a in x:
+            #     print("neck out: " + str(list(a.size())))
         return x
