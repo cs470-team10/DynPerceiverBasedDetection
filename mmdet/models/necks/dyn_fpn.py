@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import List, Tuple, Union
 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import ConvModule
@@ -12,7 +13,7 @@ from mmdet.utils import ConfigType, MultiConfig, OptConfigType
 
 
 @MODELS.register_module()
-class FPN(BaseModule):
+class DynFPN(BaseModule):
     r"""Feature Pyramid Network.
 
     This is an implementation of paper `Feature Pyramid Networks for Object
@@ -168,30 +169,50 @@ class FPN(BaseModule):
         Returns:
             tuple: Feature maps, each is a 4D-tensor.
         """
-        assert len(inputs) == len(self.in_channels)
+        #assert len(inputs) == len(self.in_channels)
         # len(inputs) == 2 Exiting 1
         # len(inputs) == 3 Exiting 2
         # len(inputs) == 4 Exiting 3, 4 => 건드릴 필요 x
+        original_length = len(inputs)
+        output_fmap_sizes = [[1, 64, 200, 304], [1, 144, 100, 152], [1, 320, 50, 76], [1, 784, 25, 38]]
 
+        #zero padding 구현하는 코드입니다.
+        for k in range(original_length, 4):
+            inputs.append(torch.zeros(output_fmap_sizes[k]).cuda())
+    
         # build laterals
         laterals = [
             lateral_conv(inputs[i + self.start_level])
             for i, lateral_conv in enumerate(self.lateral_convs)
         ]
 
-        # build top-down path
-        used_backbone_levels = len(laterals) # 3
-        for i in range(used_backbone_levels - 1, 0, -1): # i = 2, 1, 0
-            # In some cases, fixing `scale factor` (e.g. 2) is preferred, but
-            #  it cannot co-exist with `size` in `F.interpolate`.
-            if 'scale_factor' in self.upsample_cfg:
-                # fix runtime error of "+=" inplace operation in PyTorch 1.10
-                laterals[i - 1] = laterals[i - 1] + F.interpolate(
-                    laterals[i], **self.upsample_cfg)
-            else:
-                prev_shape = laterals[i - 1].shape[2:]
-                laterals[i - 1] = laterals[i - 1] + F.interpolate(
-                    laterals[i], size=prev_shape, **self.upsample_cfg)
+        if(original_length <= 3):
+            used_backbone_levels = len(laterals)  # 3
+            for i in range(original_length - 2, used_backbone_levels - 1):  # i = 0, 1 for len(inputs) = 2, i = 1 for len(inputs) = 1
+                if 'scale_factor' in self.upsample_cfg:
+                    # Fix runtime error of "+=" inplace operation in PyTorch 1.10
+                    laterals[i + 1] = laterals[i + 1] + F.interpolate(
+                        laterals[i], **self.upsample_cfg)
+                else:
+                    #아래서 위로 upsamplin하게끔 짜준 코드입니다
+                    next_shape = laterals[i + 1].shape[2:]
+                    laterals[i + 1] = laterals[i + 1] + F.interpolate(
+                        laterals[i], size=next_shape, **self.upsample_cfg)
+        else:
+            # 원래 코드라 바뀐 것 없습니다.
+            # build top-down path
+            used_backbone_levels = len(laterals) # 3
+            for i in range(used_backbone_levels - 1, 0, -1): # i = 2, 1
+                # In some cases, fixing `scale factor` (e.g. 2) is preferred, but
+                #  it cannot co-exist with `size` in `F.interpolate`.
+                if 'scale_factor' in self.upsample_cfg:
+                    # fix runtime error of "+=" inplace operation in PyTorch 1.10
+                    laterals[i - 1] = laterals[i - 1] + F.interpolate(
+                        laterals[i], **self.upsample_cfg)
+                else:
+                    prev_shape = laterals[i - 1].shape[2:]
+                    laterals[i - 1] = laterals[i - 1] + F.interpolate(
+                        laterals[i], size=prev_shape, **self.upsample_cfg)
 
         # build outputs
         # part 1: from original levels
