@@ -174,30 +174,29 @@ class DynFPN(BaseModule):
         # len(inputs) == 3 Exiting 2
         # len(inputs) == 4 Exiting 3, 4 => 건드릴 필요 x
         original_length = len(inputs)
-        output_fmap_sizes = [[1, 64, 200, 304], [1, 144, 100, 152], [1, 320, 50, 76], [1, 784, 25, 38]]
+        # output_fmap_sizes = [[1, 64, 200, 304], [1, 144, 100, 152], [1, 320, 50, 76], [1, 784, 25, 38]]
 
-        #zero padding 구현하는 코드입니다.
-        for k in range(original_length, 4):
-            inputs.append(torch.zeros(output_fmap_sizes[k]).cuda())
+        # #zero padding 구현하는 코드입니다.
+        # for k in range(original_length, 4):
+        #     inputs.append(torch.zeros(output_fmap_sizes[k]).cuda())
     
         # build laterals
         laterals = [
             lateral_conv(inputs[i + self.start_level])
-            for i, lateral_conv in enumerate(self.lateral_convs)
+            for i, lateral_conv in enumerate(self.lateral_convs) if i + self.start_level < original_length
         ]
 
         if(original_length <= 3):
-            used_backbone_levels = len(laterals)  # 3
+            used_backbone_levels = len(self.lateral_convs)  # 3
             for i in range(original_length - 2, used_backbone_levels - 1):  # i = 0, 1 for len(inputs) = 2, i = 1 for len(inputs) = 1
                 if 'scale_factor' in self.upsample_cfg:
                     # Fix runtime error of "+=" inplace operation in PyTorch 1.10
-                    laterals[i + 1] = laterals[i + 1] + F.interpolate(
-                        laterals[i], **self.upsample_cfg)
+                    new_lateral = F.interpolate(laterals[i], **self.upsample_cfg)
+                    laterals.append(new_lateral)
                 else:
                     #아래서 위로 upsamplin하게끔 짜준 코드입니다
-                    next_shape = laterals[i + 1].shape[2:]
-                    laterals[i + 1] = laterals[i + 1] + F.interpolate(
-                        laterals[i], size=next_shape, **self.upsample_cfg)
+                    new_lateral = F.interpolate(laterals[i], size=(torch.tensor(laterals[i].shape[2:]) / 2).int().tolist(), **self.upsample_cfg)
+                    laterals.append(new_lateral)
         else:
             # 원래 코드라 바뀐 것 없습니다.
             # build top-down path
