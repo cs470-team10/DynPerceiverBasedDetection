@@ -122,3 +122,10 @@ nohup python3 tools/test.py \
 nohup python3 tools/test.py \
     improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_7e-2_debug.py \
     work_dirs/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_7e-2_debug/epoch_12.pth > debug.out &
+
+
+# Label Study
+
+nohup python3 tools/test.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_7e-2_debug_labelstudy.py \
+    work_dirs/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_7e-2_debug/epoch_12.pth > debug2.out &
