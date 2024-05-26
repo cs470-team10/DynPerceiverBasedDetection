@@ -44,7 +44,7 @@ class DynamicTestLoopRandomExiting(TestLoop):
                         applied_thresholds.append(new_threshold)
                 random.shuffle(applied_thresholds)
                 for idx, data_batch in enumerate(self.dataloader):
-                    self.set_threshold(applied_thresholds[i])
+                    self.set_threshold(applied_thresholds[idx])
                     self.run_iter(idx, data_batch)
                     self.evaluate_logger.append(self.get_last_exited_stage())
                     self.evaluate_logger.append_classifier(self.get_last_classifiy_correct())
