@@ -19,7 +19,7 @@ import numpy as np
 from functools import partial
 from copy import deepcopy
 from cs470_logger.cs470_print import cs470_print
-
+import torch.nn as nn
 from mmdet.models.utils.misc import unpack_gt_instances 
 
 @MODELS.register_module()
@@ -191,7 +191,8 @@ class DynRetinaNet(SingleStageDetector):
                                batch_data_samples: SampleList):
         _x, y_early3, y_att, y_cnn, y_merge = self.extract_feat(batch_inputs)
         assert y_early3.size()[0] == 1 and y_att.size()[0] == 1 and y_cnn.size()[0] == 1 and y_merge.size()[0] == 1
-        classifiers = [y_early3.squeeze(0), y_att.squeeze(0), y_cnn.squeeze(0), y_merge.squeeze(0)]
+        softmax = nn.Softmax(dim=1).cuda()
+        classifiers = [softmax(y_early3).squeeze(0), softmax(y_att).squeeze(0), softmax(y_cnn).squeeze(0), softmax(y_merge).squeeze(0)]
         thresholds = self.backbone.threshold
         for i in range(4):
             classifier = classifiers[i]
