@@ -105,6 +105,7 @@ nohup python3 tools/train.py \
     improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-baseline.py \
     --auto-scale-lr > baseline-dyn-train.out &
 
+    
 
 # FPN Test
 nohup python3 tools/train.py \
