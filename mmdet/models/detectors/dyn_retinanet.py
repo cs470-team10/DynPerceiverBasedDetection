@@ -99,12 +99,12 @@ class DynRetinaNet(SingleStageDetector):
                 batch_inputs: Tensor,
                 batch_data_samples: SampleList,
                 rescale: bool = True) -> SampleList:
-        x, _y_early3, _y_att, _y_cnn, _y_merge = self.extract_feat(batch_inputs)
+        x, y_early3, y_att, y_cnn, y_merge = self.extract_feat(batch_inputs)
         results_list = self.bbox_head.predict(
             x, batch_data_samples, rescale=rescale)
         batch_data_samples = self.add_pred_to_datasample(
             batch_data_samples, results_list)
-        self.classifiy_correct = self.get_classifier_correct(batch_inputs, batch_data_samples)
+        self.classifiy_correct = self.get_classifier_correct(y_early3, y_att, y_cnn, y_merge, batch_data_samples)
         return batch_data_samples
     
     def _forward(
@@ -186,10 +186,7 @@ class DynRetinaNet(SingleStageDetector):
     def unset_threshold(self):
         self.backbone.unset_threshold()
 
-    def get_classifier_correct(self,
-                               batch_inputs: Tensor,
-                               batch_data_samples: SampleList):
-        _x, y_early3, y_att, y_cnn, y_merge = self.extract_feat(batch_inputs)
+    def get_classifier_correct(self, y_early3, y_att, y_cnn, y_merge, batch_data_samples: SampleList):
         assert y_early3.size()[0] == 1 and y_att.size()[0] == 1 and y_cnn.size()[0] == 1 and y_merge.size()[0] == 1
         softmax = nn.Softmax(dim=1).cuda()
         classifiers = [softmax(y_early3).squeeze(0), softmax(y_att).squeeze(0), softmax(y_cnn).squeeze(0), softmax(y_merge).squeeze(0)]
