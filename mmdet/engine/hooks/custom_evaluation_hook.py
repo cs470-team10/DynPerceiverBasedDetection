@@ -1,4 +1,5 @@
-from mmcv.runner.hooks import HOOKS, Hook
+from mmengine.registry import HOOKS
+from mmengine.hooks import Hook
 import torch
 import numpy as np
 from mmdet.evaluation.functional import bbox_overlaps
@@ -6,33 +7,33 @@ from mmdet.evaluation.functional import bbox_overlaps
 @HOOKS.register_module()
 class CustomEvaluationHook(Hook):
     def __init__(self, interval=1, **kwargs):
+        super().__init__(**kwargs)
         self.interval = interval
 
     def after_train_epoch(self, runner):
+        runner.logger.info("CustomEvaluationHook after_train_epoch is called")
         if not self.every_n_epochs(runner, self.interval):
             return
-
+        runner.logger.info("Interval check passed")
+        print("Yes I am here Do not worry!!!")
         # 모델을 평가 모드로 설정
         runner.model.eval()
-
+        print("Yes I am here Do not worry2222!!!")
         # 데이터 로더 가져오기
         dataloader = runner.val_dataloader
         dataset = dataloader.dataset
-
+        print("Yes I am here Do not worry33333!!!")
         results = []
         for i, data in enumerate(dataloader):
             with torch.no_grad():
                 result = runner.model(return_loss=False, rescale=True, **data)
             results.extend(result)
-
+        print("Yes I am here Do not worry444444!!!")
         # 평가 메트릭 계산
         image_mAPs = []
         for i, result in enumerate(results):
             gt_bboxes = dataset.get_ann_info(i)['bboxes']
-            gt_labels = dataset.get_ann_info(i)['labels']
             pred_bboxes = result[0]
-            pred_labels = result[1]
-            pred_scores = result[2]
 
             if gt_bboxes.shape[0] == 0:
                 image_mAPs.append(0)
@@ -54,11 +55,5 @@ class CustomEvaluationHook(Hook):
 
             image_mAPs.append(f1)
             runner.logger.info(f'Image {i}: Precision = {precision}, Recall = {recall}, mAP = {f1}')
-
-        # 전체 이미지에 대한 mAP 결과 로깅
-        avg_mAP = np.mean(image_mAPs)
-        runner.logger.info(f'Average mAP over all images: {avg_mAP}')
-
-        # 평가 결과를 runner.log_buffer.output에 저장
-        runner.log_buffer.output['avg_mAP'] = avg_mAP
-        runner.log_buffer.ready = True
+        print("Yes I am here Do not worry55555!!!")
+    

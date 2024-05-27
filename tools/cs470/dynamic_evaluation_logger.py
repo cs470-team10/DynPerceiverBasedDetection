@@ -22,7 +22,6 @@ class DynamicEvaluationLogger:
         self.flops_unit = 1e9
 
     def save_info(self, metrics, thresholds):
-        print(metrics.keys())
         self.flops_info.append(self.get_average_flops())
         self.image_ratio_info.append(self.get_ratio_of_exiting_stages())
         self.mAP_info.append(metrics['coco/bbox_mAP'])

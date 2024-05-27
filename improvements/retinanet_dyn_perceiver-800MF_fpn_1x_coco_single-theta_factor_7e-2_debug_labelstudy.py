@@ -7,7 +7,7 @@ dynamic_evaluate_on_test = True
 custom_imports = dict(
     imports=['mmdet.models.backbones.dyn_perceiver_regnet_zeromap',
              'mmdet.datasets.custom_coco_dataset',
-             'mmdet.core.evaluation.custom_evaluation_hook'],
+             'mmdet.engine.hooks.custom_evaluation_hook'],
     allow_failed_imports=False)
 
 model = dict(
@@ -35,7 +35,7 @@ custom_hooks = [
          interval=10,
          log_checkpoint=True,
          log_model=True),
-    dict(type='CustomEvaluationHook')  # Custom Evaluation Hook 추가
+    dict(type='CustomEvaluationHook', interval=1)  # Custom Evaluation Hook 추가
 ]
 
 val_cfg = dict(type='DynamicValLoop', dynamic_evaluate_epoch=dynamic_evaluate_epoch)
