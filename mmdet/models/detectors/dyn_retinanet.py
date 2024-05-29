@@ -191,12 +191,16 @@ class DynRetinaNet(SingleStageDetector):
         softmax = nn.Softmax(dim=1).cuda()
         classifiers = [softmax(y_early3).squeeze(0), softmax(y_att).squeeze(0), softmax(y_cnn).squeeze(0), softmax(y_merge).squeeze(0)]
         thresholds = self.backbone.threshold
-        for i in range(4):
-            classifier = classifiers[i]
-            threshold = thresholds[i]
-            if (classifier.max().item() >= threshold.item()):
-                return classifier.argmax().item() == self.get_target_labels(batch_data_samples)[0]
-        return False
+        if thresholds is not None:
+            for i in range(4):
+                classifier = classifiers[i]
+                threshold = thresholds[i]
+                if (classifier.max().item() >= threshold.item()):
+                    return classifier.argmax().item() == self.get_target_labels(batch_data_samples)[0]
+            return False
+        else:
+            return classifiers[3].argmax().item() == self.get_target_labels(batch_data_samples)[0]
+
 
     def get_target_labels(self, batch_data_samples: SampleList):
         outputs = unpack_gt_instances(batch_data_samples)
