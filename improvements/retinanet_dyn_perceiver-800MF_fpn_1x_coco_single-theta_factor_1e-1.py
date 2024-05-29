@@ -18,7 +18,8 @@ model = dict(
     bbox_head=dict(
         loss_dyn=dict(theta_factor=theta_factor,
                       lambda_factor=lambda_factor,
-                       type='DynLoss'),
+                      with_kd=False,
+                      type='DynLoss'),
         type='DynRetinaHead'),
     type='DynRetinaNet'
 )

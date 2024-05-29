@@ -57,6 +57,22 @@ nohup python3 tools/train.py \
     --auto-scale-lr > theta_factor_1e-1-train.out &
 
 nohup python3 tools/train.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_3e-2.py \
+    --auto-scale-lr > theta_factor_3e-2-train.out &
+
+nohup python3 tools/train.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_4e-2.py \
+    --auto-scale-lr > theta_factor_4e-2-train.out &
+
+nohup python3 tools/train.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_6e-2.py \
+    --auto-scale-lr > theta_factor_6e-2-train.out &
+
+nohup python3 tools/train.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_7e-2.py \
+    --auto-scale-lr > theta_factor_7e-2-train.out &
+
+nohup python3 tools/train.py \
     improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_5e-2.py \
     --auto-scale-lr > theta_factor_5e-2-train.out &
 
@@ -88,3 +104,25 @@ nohup python3 tools/train.py \
 nohup python3 tools/train.py \
     improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-baseline.py \
     --auto-scale-lr > baseline-dyn-train.out &
+
+
+# FPN Test
+nohup python3 tools/train.py \
+    improvements/retinanet_regnety-800MF_fpn_1x_coco_single-on-output-test.py \
+    --auto-scale-lr > regnet-y-fpn-on-output-test.out &
+
+nohup python3 tools/train.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_7e-2_debug.py \
+    --auto-scale-lr > dyn-fpn-on-output-test.out &
+
+nohup python3 tools/test.py \
+    improvements/retinanet_regnety-800MF_fpn_1x_coco_single-on-output-test.py \
+    work_dirs/retinanet_regnety-800MF_fpn_1x_coco_single-on-output-test/epoch_12.pth > regnet-y-fpn-on-output-evaluate.out &
+
+nohup python3 tools/test.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_7e-2_debug-classifier.py \
+    work_dirs/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_7e-2_debug/epoch_12.pth > classifier-correct.out &
+
+nohup python3 tools/test.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_7e-2_debug-random-exiting.py \
+    work_dirs/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_7e-2_debug/epoch_12.pth > random-exiting.out &

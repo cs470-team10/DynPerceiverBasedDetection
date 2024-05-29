@@ -19,8 +19,10 @@ class DynamicEvaluationLogger:
         self.mAP_l_info = []
         self.image_ratio_info = []
         self.thresholds_info = []
+        self.classification_accuracy = []
         self.flops_unit = 1e9
         self.is_coco = None
+        self.correct_classify_images = 0
 
     def _set_is_coco(self, metrics):
         if self.is_coco is not None:
@@ -48,10 +50,15 @@ class DynamicEvaluationLogger:
             self.mAP_info.append(metrics['pascal_voc/mAP'])
             self.mAP_50_info.append(metrics['pascal_voc/AP50'])
         self.thresholds_info.append(thresholds)
+        self.classification_accuracy.append(self.get_classification_accuracy())
         self.num_exiting_images = torch.tensor([0, 0, 0, 0])
+        self.correct_classify_images = 0
 
     def append(self, exiting_stage):
         self.num_exiting_images[exiting_stage - 1] += 1
+
+    def append_classifier(self, correct):
+        self.correct_classify_images += 1 if correct else 0
 
     def get_average_flops(self):
         return torch.sum((self.num_exiting_images / torch.sum(self.num_exiting_images)) * self.flops).item() / self.flops_unit
@@ -59,13 +66,17 @@ class DynamicEvaluationLogger:
     def get_ratio_of_exiting_stages(self):
         return (self.num_exiting_images / torch.sum(self.num_exiting_images)).tolist()
     
+    def get_classification_accuracy(self):
+        cs470_print(f"Classification Accuracy: {str(self.correct_classify_images * 1.0 / torch.sum(self.num_exiting_images).item())}")
+        return self.correct_classify_images * 1.0 / torch.sum(self.num_exiting_images).item()
+    
     def process(self):
         csv_file = open(self.csv_file_dir, "w")
         label, _ = self._get_mAP(0)
-        csv_file.write(f"flops(GF),{label},exiting_in_1,exiting_in_2,exiting_in_3,exiting_in_4,threshold_1,threshold_2,threshold_3,threshold_4\n")
+        csv_file.write(f"flops(GF),{label},exiting_in_1,exiting_in_2,exiting_in_3,exiting_in_4,threshold_1,threshold_2,threshold_3,threshold_4,classification_accuracy\n")
         for i in range(len(self.flops_info)):
             _, mAP_info = self._get_mAP(i)
-            output = [self.flops_info[i]] + mAP_info + self.image_ratio_info[i] + self.thresholds_info[i]
+            output = [self.flops_info[i]] + mAP_info + self.image_ratio_info[i] + self.thresholds_info[i] + [self.classification_accuracy[i]]
             csv_file.write(",".join(str(num) for num in output) + "\n")
         csv_file.close()
         cs470_print(self.csv_file_dir + " saved.")

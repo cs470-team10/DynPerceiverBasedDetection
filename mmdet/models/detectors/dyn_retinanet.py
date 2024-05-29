@@ -10,7 +10,6 @@ import torch
 
 from mmdet.registry import MODELS
 from mmdet.structures import OptSampleList, SampleList
-from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
 from mmengine.utils import is_list_of
 
 from mmdet.structures import SampleList
@@ -20,6 +19,8 @@ import numpy as np
 from functools import partial
 from copy import deepcopy
 from cs470_logger.cs470_print import cs470_print
+import torch.nn as nn
+from mmdet.models.utils.misc import unpack_gt_instances 
 
 @MODELS.register_module()
 class DynRetinaNet(SingleStageDetector):
@@ -48,6 +49,7 @@ class DynRetinaNet(SingleStageDetector):
             self.theta_factor = 0
             self.lambda_factor = 0
         self.metrics = []
+        self.classifiy_correct = False
     
     # Loss functions
     def loss(self, batch_inputs: Tensor,
@@ -97,11 +99,12 @@ class DynRetinaNet(SingleStageDetector):
                 batch_inputs: Tensor,
                 batch_data_samples: SampleList,
                 rescale: bool = True) -> SampleList:
-        x, _y_early3, _y_att, _y_cnn, _y_merge = self.extract_feat(batch_inputs)
+        x, y_early3, y_att, y_cnn, y_merge = self.extract_feat(batch_inputs)
         results_list = self.bbox_head.predict(
             x, batch_data_samples, rescale=rescale)
         batch_data_samples = self.add_pred_to_datasample(
             batch_data_samples, results_list)
+        self.classifiy_correct = self.get_classifier_correct(y_early3, y_att, y_cnn, y_merge, batch_data_samples)
         return batch_data_samples
     
     def _forward(
@@ -182,3 +185,24 @@ class DynRetinaNet(SingleStageDetector):
     
     def unset_threshold(self):
         self.backbone.unset_threshold()
+
+    def get_classifier_correct(self, y_early3, y_att, y_cnn, y_merge, batch_data_samples: SampleList):
+        assert y_early3.size()[0] == 1 and y_att.size()[0] == 1 and y_cnn.size()[0] == 1 and y_merge.size()[0] == 1
+        softmax = nn.Softmax(dim=1).cuda()
+        classifiers = [softmax(y_early3).squeeze(0), softmax(y_att).squeeze(0), softmax(y_cnn).squeeze(0), softmax(y_merge).squeeze(0)]
+        thresholds = self.backbone.threshold
+        for i in range(4):
+            classifier = classifiers[i]
+            threshold = thresholds[i]
+            if (classifier.max().item() >= threshold.item()):
+                return classifier.argmax().item() == self.get_target_labels(batch_data_samples)[0]
+        return False
+
+    def get_target_labels(self, batch_data_samples: SampleList):
+        outputs = unpack_gt_instances(batch_data_samples)
+
+        (batch_gt_instances, batch_gt_instances_ignore, batch_img_metas) = outputs
+        labels = []
+        for t in batch_gt_instances:
+            labels.append(t.labels.tolist()[0])
+        return labels
