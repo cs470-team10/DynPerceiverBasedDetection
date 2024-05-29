@@ -134,6 +134,8 @@ class VOCMetric(BaseMetric):
                                   f'{self.eval_mode}.')
             else:
                 dataset_name = self.dataset_meta['classes']
+                logger.info(f'Data : {dataset_name}')
+                #dataset_name = 'det'
 
             mean_aps = []
             for iou_thr in self.iou_thrs:
