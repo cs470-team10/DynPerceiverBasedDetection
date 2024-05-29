@@ -41,10 +41,10 @@ def get_threshold(model, val_loader, fp16: bool):
         for probs in probs_list:
             print("\n")
             cs470_print('*****************')
-            cs470_print(str(probs))
+            cs470_print(f"Probs: {str(probs.tolist())}")
             acc_val, T = tester.dynamic_eval_find_threshold(val_pred, val_target, probs)
             return_list.append(T)
-            cs470_print(str(T))
+            cs470_print(f"Threshold: {str(T.tolist())}")
             cs470_print('valid acc: {:.3f}'.format(acc_val))
         
     cs470_print('----------ALL DONE-----------')
@@ -95,7 +95,7 @@ class Tester(object):
                     logits[b].append(_t)
                     
             if idx % 50 == 0:
-                cs470_print('Generate Logit: [{0}/{1}]'.format(idx, max(max_images, len(dataloader))))
+                cs470_print('Generate Logit: [{0}/{1}]'.format(idx, min(max_images, len(dataloader))))
         
         for b in range(n_stage):
             logits[b] = torch.cat(logits[b], dim=0)

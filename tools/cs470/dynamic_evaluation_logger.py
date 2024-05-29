@@ -20,16 +20,33 @@ class DynamicEvaluationLogger:
         self.image_ratio_info = []
         self.thresholds_info = []
         self.flops_unit = 1e9
+        self.is_coco = None
+
+    def _set_is_coco(self, metrics):
+        if self.is_coco is not None:
+            return
+        for key in metrics.keys():
+            if "coco/bbox_mAP" in key:
+                self.is_coco = True
+                return
+            
+        self.is_coco = False
+        return
 
     def save_info(self, metrics, thresholds):
+        self._set_is_coco(metrics)
         self.flops_info.append(self.get_average_flops())
         self.image_ratio_info.append(self.get_ratio_of_exiting_stages())
-        self.mAP_info.append(metrics['coco/bbox_mAP'])
-        self.mAP_50_info.append(metrics['coco/bbox_mAP_50'])
-        self.mAP_75_info.append(metrics['coco/bbox_mAP_75'])
-        self.mAP_s_info.append(metrics['coco/bbox_mAP_s'])
-        self.mAP_m_info.append(metrics['coco/bbox_mAP_m'])
-        self.mAP_l_info.append(metrics['coco/bbox_mAP_l'])
+        if self.is_coco:
+            self.mAP_info.append(metrics['coco/bbox_mAP'])
+            self.mAP_50_info.append(metrics['coco/bbox_mAP_50'])
+            self.mAP_75_info.append(metrics['coco/bbox_mAP_75'])
+            self.mAP_s_info.append(metrics['coco/bbox_mAP_s'])
+            self.mAP_m_info.append(metrics['coco/bbox_mAP_m'])
+            self.mAP_l_info.append(metrics['coco/bbox_mAP_l'])
+        else:
+            self.mAP_info.append(metrics['pascal_voc/mAP'])
+            self.mAP_50_info.append(metrics['pascal_voc/AP50'])
         self.thresholds_info.append(thresholds)
         self.num_exiting_images = torch.tensor([0, 0, 0, 0])
 
@@ -43,16 +60,22 @@ class DynamicEvaluationLogger:
         return (self.num_exiting_images / torch.sum(self.num_exiting_images)).tolist()
     
     def process(self):
-        
         csv_file = open(self.csv_file_dir, "w")
-        csv_file.write("flops(GF),bbox_mAP,bbox_mAP_50,bbox_mAP_75,bbox_mAP_s,bbox_mAP_m,bbox_mAP_l,exiting_in_1,exiting_in_2,exiting_in_3,exiting_in_4,threshold_1,threshold_2,threshold_3,threshold_4\n")
+        label, _ = self._get_mAP(0)
+        csv_file.write(f"flops(GF),{label},exiting_in_1,exiting_in_2,exiting_in_3,exiting_in_4,threshold_1,threshold_2,threshold_3,threshold_4\n")
         for i in range(len(self.flops_info)):
-            output = [self.flops_info[i], self.mAP_info[i], self.mAP_50_info[i], self.mAP_75_info[i], self.mAP_s_info[i], self.mAP_m_info[i], self.mAP_l_info[i]] + self.image_ratio_info[i] + self.thresholds_info[i]
+            _, mAP_info = self._get_mAP(i)
+            output = [self.flops_info[i]] + mAP_info + self.image_ratio_info[i] + self.thresholds_info[i]
             csv_file.write(",".join(str(num) for num in output) + "\n")
         csv_file.close()
         cs470_print(self.csv_file_dir + " saved.")
         return
     
+    def _get_mAP(self, i):
+        if self.is_coco:
+            return "bbox_mAP,bbox_mAP_50,bbox_mAP_75,bbox_mAP_s,bbox_mAP_m,bbox_mAP_l", [self.mAP_info[i], self.mAP_50_info[i], self.mAP_75_info[i], self.mAP_s_info[i], self.mAP_m_info[i], self.mAP_l_info[i]]
+        else:
+            return "pascal_voc_mAP,pascal_voc_AP50", [self.mAP_info[i], self.mAP_50_info[i]]
 
 class DynamicValidationLogger(DynamicEvaluationLogger):
     def __init__(self, log_dir, flops, epoch):
