@@ -39,6 +39,7 @@ class DynamicValLoop(ValLoop):
                 for idx, data_batch in enumerate(self.dataloader):
                     self.run_iter(idx, data_batch)
                     self.evaluate_logger.append(self.get_last_exited_stage())
+                    self.evaluate_logger.append_classifier(self.get_last_classifiy_correct())
                 self.unset_threshold()
                 metrics = self.evaluator.evaluate(len(self.dataloader.dataset))
                 self.runner.model.metrics.append(metrics)
@@ -67,6 +68,9 @@ class DynamicValLoop(ValLoop):
     
     def get_last_exited_stage(self):
         return self.runner.model.backbone.get_last_exited_stage()
+    
+    def get_last_classifiy_correct(self):
+        return self.runner.model.classifiy_correct
 
     def set_threshold(self, threshold):
         self.runner.model.set_threshold(threshold)
@@ -104,6 +108,7 @@ class DynamicTestLoop(TestLoop):
                 for idx, data_batch in enumerate(self.dataloader):
                     self.run_iter(idx, data_batch)
                     self.evaluate_logger.append(self.get_last_exited_stage())
+                    self.evaluate_logger.append_classifier(self.get_last_classifiy_correct())
                 self.unset_threshold()
                 metrics = self.evaluator.evaluate(len(self.dataloader.dataset))
                 self.runner.model.metrics.append(metrics)
@@ -132,6 +137,9 @@ class DynamicTestLoop(TestLoop):
     
     def get_last_exited_stage(self):
         return self.runner.model.backbone.get_last_exited_stage()
+    
+    def get_last_classifiy_correct(self):
+        return self.runner.model.classifiy_correct
     
     def set_threshold(self, threshold):
         self.runner.model.set_threshold(threshold)

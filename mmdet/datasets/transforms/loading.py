@@ -16,6 +16,7 @@ from mmdet.structures.bbox import get_box_type
 from mmdet.structures.bbox.box_type import autocast_box_type
 from mmdet.structures.mask import BitmapMasks, PolygonMasks
 
+import warnings
 
 @TRANSFORMS.register_module()
 class LoadImageFromNDArray(LoadImageFromFile):
@@ -1072,3 +1073,60 @@ class LoadTrackAnnotations(LoadAnnotations):
         repr_str += f"imdecode_backend='{self.imdecode_backend}', "
         repr_str += f'file_client_args={self.file_client_args})'
         return repr_str
+
+@TRANSFORMS.register_module()
+class ILSVRCLoader(BaseTransform):
+    def __init__(self,
+                 to_float32: bool = False,
+                 color_type: str = 'color',
+                 imdecode_backend: str = 'cv2',
+                 file_client_args: Optional[dict] = None,
+                 ignore_empty: bool = False,
+                 *,
+                 backend_args: Optional[dict] = None) -> None:
+        self.ignore_empty = ignore_empty
+        self.to_float32 = to_float32
+        self.color_type = color_type
+        self.imdecode_backend = imdecode_backend
+        self.img_size = (512, 512)
+
+        self.file_client_args: Optional[dict] = None
+        self.backend_args: Optional[dict] = None
+        if file_client_args is not None:
+            warnings.warn(
+                '"file_client_args" will be deprecated in future. '
+                'Please use "backend_args" instead', DeprecationWarning)
+            if backend_args is not None:
+                raise ValueError(
+                    '"file_client_args" and "backend_args" cannot be set '
+                    'at the same time.')
+
+            self.file_client_args = file_client_args.copy()
+        if backend_args is not None:
+            self.backend_args = backend_args.copy()
+
+    def transform(self, results: dict) -> Optional[dict]:
+        """Functions to load image.
+
+        Args:
+            results (dict): Result dict from
+                :class:`mmengine.dataset.BaseDataset`.
+
+        Returns:
+            dict: The dict contains loaded image and meta information.
+        """
+
+        filename = results['img_path']
+        try:
+            if self.to_float32:
+                img = img.astype(np.float32)
+
+            results['img'] = img
+            results['img_shape'] = img.shape[:2]
+            results['ori_shape'] = img.shape[:2]
+            return results
+        except Exception as e:
+            if self.ignore_empty:
+                return None
+            else:
+                raise e
