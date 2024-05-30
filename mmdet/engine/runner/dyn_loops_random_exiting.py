@@ -32,29 +32,30 @@ class DynamicTestLoopRandomExiting(TestLoop):
         self.runner.call_hook('before_test_epoch')
         self.runner.model.eval()
         if self.dynamic_evaluate:
-            cs470_print("Dynamic Evaluation")
-            self.evaluate_logger = DynamicEvaluationLogger(self.runner._log_dir, self.flops)
-            self.get_threshold_and_flops()
-            for index, _threshold in enumerate(self.thresholds):
-                num_exiting_images = NUM_IMAGES[index]
-                thresholds = [torch.tensor([-1,1,1,1]),torch.tensor([1,-1,1,1]),torch.tensor([1,1,-1,1]),torch.tensor([1,1,1,-1])]
-                applied_thresholds = []
-                for new_threshold, count in zip(thresholds, num_exiting_images):
-                    for _ in range(count):
-                        applied_thresholds.append(new_threshold)
-                random.shuffle(applied_thresholds)
-                for idx, data_batch in enumerate(self.dataloader):
-                    self.set_threshold(applied_thresholds[idx])
-                    self.run_iter(idx, data_batch)
-                    self.evaluate_logger.append(self.get_last_exited_stage())
-                    self.evaluate_logger.append_classifier(self.get_last_classifiy_correct())
-                    self.unset_threshold()
-                metrics = self.evaluator.evaluate(len(self.dataloader.dataset))
-                self.runner.model.metrics.append(metrics)
-                self.evaluate_logger.save_info(metrics, [0,0,0,0])
+            for iteraion_num in range(10):
+                cs470_print(f"Dynamic Evaluation {str(iteraion_num + 1)}")
+                self.evaluate_logger = DynamicEvaluationLogger(self.runner._log_dir, self.flops, f"test_info_{str(iteraion_num + 1)}.csv")
+                self.get_threshold_and_flops()
+                for index, _threshold in enumerate(self.thresholds):
+                    num_exiting_images = NUM_IMAGES[index]
+                    thresholds = [torch.tensor([-1,1,1,1]),torch.tensor([1,-1,1,1]),torch.tensor([1,1,-1,1]),torch.tensor([1,1,1,-1])]
+                    applied_thresholds = []
+                    for new_threshold, count in zip(thresholds, num_exiting_images):
+                        for _ in range(count):
+                            applied_thresholds.append(new_threshold)
+                    random.shuffle(applied_thresholds)
+                    for idx, data_batch in enumerate(self.dataloader):
+                        self.set_threshold(applied_thresholds[idx])
+                        self.run_iter(idx, data_batch)
+                        self.evaluate_logger.append(self.get_last_exited_stage())
+                        self.evaluate_logger.append_classifier(self.get_last_classifiy_correct())
+                        self.unset_threshold()
+                    metrics = self.evaluator.evaluate(len(self.dataloader.dataset))
+                    self.runner.model.metrics.append(metrics)
+                    self.evaluate_logger.save_info(metrics, [0,0,0,0])
+                self.evaluate_logger.process()
             self.runner.call_hook('after_test_epoch', metrics=metrics)
             self.runner.call_hook('after_test')
-            self.evaluate_logger.process()
         else:
             for idx, data_batch in enumerate(self.dataloader):
                 self.run_iter(idx, data_batch)
