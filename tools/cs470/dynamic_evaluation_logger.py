@@ -4,10 +4,10 @@ import torch
 from cs470_logger.cs470_print import cs470_print
 
 class DynamicEvaluationLogger:
-    def __init__(self, log_dir, flops):
+    def __init__(self, log_dir, flops, filename = "test_info.csv"):
         self.log_dir = path.join(log_dir, "cs470_log")
         os.makedirs(self.log_dir, exist_ok=True)
-        self.csv_file_dir = path.join(self.log_dir, "test_info.csv")
+        self.csv_file_dir = path.join(self.log_dir, filename)
         self.flops = flops
         self.num_exiting_images = torch.tensor([0, 0, 0, 0])
         self.flops_info = []
@@ -90,5 +90,4 @@ class DynamicEvaluationLogger:
 
 class DynamicValidationLogger(DynamicEvaluationLogger):
     def __init__(self, log_dir, flops, epoch):
-        super().__init__(log_dir, flops)
-        self.csv_file_dir = path.join(self.log_dir, f"epoch_{epoch}_validation_info.csv")
+        super().__init__(log_dir, flops, f"epoch_{epoch}_validation_info.csv")

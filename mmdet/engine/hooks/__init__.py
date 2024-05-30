@@ -12,12 +12,12 @@ from .visualization_hook import (DetVisualizationHook,
                                  TrackVisualizationHook)
 from .yolox_mode_switch_hook import YOLOXModeSwitchHook
 from .wandb_logger_hook import WandbLoggerHook
-
+from .custom_evaluation_hook import CustomEvaluationHook
 
 __all__ = [
     'YOLOXModeSwitchHook', 'SyncNormHook', 'CheckInvalidLossHook',
     'SetEpochInfoHook', 'MemoryProfilerHook', 'DetVisualizationHook',
     'NumClassCheckHook', 'MeanTeacherHook', 'trigger_visualization_hook',
     'PipelineSwitchHook', 'TrackVisualizationHook',
-    'GroundingVisualizationHook', 'WandbLoggerHook'
+    'GroundingVisualizationHook', 'WandbLoggerHook', 'CustomEvaluationHook'
 ]
