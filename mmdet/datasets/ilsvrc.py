@@ -87,5 +87,5 @@ class ILSVRCDataset(XMLDataset):
         # Coordinates are in range [0, width - 1 or height - 1]
         data_info['instances'] = self._parse_instance_info(
             raw_ann_info, minus_one=False)
-        print(data_info)
+        #print(data_info)
         return data_info
