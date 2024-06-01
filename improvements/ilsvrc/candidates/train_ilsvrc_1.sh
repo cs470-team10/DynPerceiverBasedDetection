@@ -1,7 +1,9 @@
 #!/bin/bash
-CONFIGS=("theta_1-lambda_1" \
-         "theta_5e-1-lambda_1" \
-         "theta_3e-1-lambda_1")
+CONFIGS=(
+    "theta_1-lambda_1"
+    "theta_5e-1-lambda_1"
+    "theta_3e-1-lambda_1"
+)
 
 run_config() {
     local file_config=$1
