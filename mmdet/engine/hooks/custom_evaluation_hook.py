@@ -10,7 +10,7 @@ class CustomEvaluationHook(Hook):
         super().__init__(**kwargs)
         self.interval = interval
 
-    def after_train_epoch(self, runner):
+    def after_val_iter(self, runner): #ㅇㅇㅇㅇ
         runner.logger.info("CustomEvaluationHook after_train_epoch is called")
         if not self.every_n_epochs(runner, self.interval):
             return
