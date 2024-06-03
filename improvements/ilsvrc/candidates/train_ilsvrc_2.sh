@@ -6,11 +6,11 @@ CONFIGS=(
     "theta_1e-2-lambda_1"
     "theta_1e-3-lambda_1"
     # "theta_1e-4-lambda_1"
-    "theta_105e-4-lambda_1"
-    "theta_110e-4-lambda_1"
-    "theta_115e-4-lambda_1"
     "theta_120e-4-lambda_1"
-    "theta_130e-4-lambda_1"
+    "theta_140e-4-lambda_1"
+    "theta_200e-4-lambda_1"
+    "theta_300e-4-lambda_1"
+    "theta_400e-4-lambda_1"
 )
 
 run_config() {

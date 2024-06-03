@@ -1,6 +1,6 @@
 _base_ ='../../../configs/regnet/retinanet_regnetx-3.2GF_fpn_ilsvrc.py'  # '../configs/regnet/retinanet_regnetx-3.2GF_fpn_1x_coco.py'
 dynamic_evaluate_epoch = [12] # Training 때 dynamic evaluation을 할 epoch. 안할거면 [], 다할거면 [i + 1 for i in range(12)]
-theta_factor = 105e-4
+theta_factor = 400e-4
 lambda_factor = 1
 dynamic_evaluate_on_test = True
 
