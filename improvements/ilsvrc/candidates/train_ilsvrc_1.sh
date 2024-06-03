@@ -5,7 +5,12 @@ CONFIGS=(
     "theta_3e-1-lambda_1"
     "theta_5e-2-lambda_1"
     "theta_5e-3-lambda_1"
-    "theta_5e-4-lambda_1"
+    # "theta_5e-4-lambda_1"
+    "theta_95e-4-lambda_1"
+    "theta_90e-4-lambda_1"
+    "theta_85e-4-lambda_1"
+    "theta_80e-4-lambda_1"
+    "theta_70e-4-lambda_1"
 )
 
 run_config() {
