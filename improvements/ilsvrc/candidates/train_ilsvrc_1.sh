@@ -8,8 +8,8 @@ CONFIGS=(
     # "theta_5e-4-lambda_1"
     "theta_95e-4-lambda_1"
     "theta_90e-4-lambda_1"
-    "theta_110-4-lambda_1"
-    "theta_115-4-lambda_1"
+    "theta_110e-4-lambda_1"
+    "theta_115e-4-lambda_1"
 )
 
 run_config() {
