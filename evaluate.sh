@@ -105,7 +105,6 @@ nohup python3 tools/train.py \
     improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-baseline.py \
     --auto-scale-lr > baseline-dyn-train.out &
 
-
 # FPN Test
 nohup python3 tools/train.py \
     improvements/retinanet_regnety-800MF_fpn_1x_coco_single-on-output-test.py \
@@ -126,3 +125,24 @@ nohup python3 tools/test.py \
 nohup python3 tools/test.py \
     improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_7e-2_debug-random-exiting.py \
     work_dirs/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_7e-2_debug/epoch_12.pth > random-exiting.out &
+
+# ImageNet Training
+
+nohup python3 tools/train.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_ilsvrc_single-baseline.py \
+    --auto-scale-lr > ilsvrc-baseline-train.out &
+
+nohup python3 tools/train.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_ilsvrc_single-dyn.py \
+    --auto-scale-lr > ilsvrc-dyn-train.out &
+
+# Label Study
+
+nohup python3 tools/test.py \
+    improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_7e-2_debug_labelstudy.py \
+    work_dirs/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-theta_factor_7e-2_debug/epoch_12.pth > debug2.out &
+
+
+nohup python3 tools/test.py \
+    improvements/ilsvrc/retinanet_dyn_perceiver-800MF_fpn_1x_ilsvrc_single-dyn-theta_115e-4-lambda_1_labelstudy.py \
+    work_dirs/retinanet_dyn_perceiver-800MF_fpn_1x_ilsvrc_single-dyn-theta_115e-4-lambda_1/epoch_12.pth > debug3.out &

@@ -41,10 +41,10 @@ def get_threshold(model, val_loader, fp16: bool):
         for probs in probs_list:
             print("\n")
             cs470_print('*****************')
-            cs470_print(str(probs))
+            cs470_print(f"Probs: {str(probs.tolist())}")
             acc_val, T = tester.dynamic_eval_find_threshold(val_pred, val_target, probs)
             return_list.append(T)
-            cs470_print(str(T))
+            cs470_print(f"Threshold: {str(T.tolist())}")
             cs470_print('valid acc: {:.3f}'.format(acc_val))
         
     cs470_print('----------ALL DONE-----------')
