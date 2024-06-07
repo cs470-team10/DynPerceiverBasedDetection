@@ -41,10 +41,10 @@ def get_threshold(model, val_loader, fp16: bool):
         for probs in probs_list:
             print("\n")
             cs470_print('*****************')
-            cs470_print(str(probs))
+            cs470_print(f"Probs: {str(probs.tolist())}")
             acc_val, T = tester.dynamic_eval_find_threshold(val_pred, val_target, probs)
             return_list.append(T)
-            cs470_print(str(T))
+            cs470_print(f"Threshold: {str(T.tolist())}")
             cs470_print('valid acc: {:.3f}'.format(acc_val))
         
     cs470_print('----------ALL DONE-----------')
@@ -59,7 +59,6 @@ class Tester(object):
         self.softmax = nn.Softmax(dim=1).cuda()
 
     def calc_logit(self, dataloader, early_break=False, max_images = 5000):
-        
         self.model.backbone.eval()
         self.model.cuda()
         n_stage = 4
@@ -69,19 +68,13 @@ class Tester(object):
         for idx, sample in enumerate(dataloader):
             if early_break and idx > max_images:
                 break
-            
             target = sample['data_samples']
-            
             tmp_labels = []
-            
             for t in target:
                 labels = t.gt_instances.labels.tolist()
                 tmp_labels.append(labels[0])
             
             targets.append(torch.tensor(tmp_labels))
-            
-            #packed_inputs = demo_mm_inputs(2, [[3, 128, 128], [3, 125, 130]])
-            #data = self.data_preprocessor(data_batch)
             data = self.model.data_preprocessor(sample)
             input = data['inputs']
 
@@ -95,7 +88,7 @@ class Tester(object):
                     logits[b].append(_t)
                     
             if idx % 50 == 0:
-                cs470_print('Generate Logit: [{0}/{1}]'.format(idx, max(max_images, len(dataloader))))
+                cs470_print('Generate Logit: [{0}/{1}]'.format(idx, min(max_images, len(dataloader))))
         
         for b in range(n_stage):
             logits[b] = torch.cat(logits[b], dim=0)

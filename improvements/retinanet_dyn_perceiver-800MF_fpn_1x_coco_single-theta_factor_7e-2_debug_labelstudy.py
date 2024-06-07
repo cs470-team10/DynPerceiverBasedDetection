@@ -1,6 +1,6 @@
 _base_ = '../configs/regnet/retinanet_regnetx-3.2GF_fpn_1x_coco.py'
 dynamic_evaluate_epoch = [1, 12] # Training 때 dynamic evaluation을 할 epoch. 안할거면 [], 다할거면 [i + 1 for i in range(12)]
-theta_factor = 5e-2
+theta_factor = 7e-2
 lambda_factor = 1-theta_factor
 dynamic_evaluate_on_test = True
 
@@ -14,7 +14,9 @@ model = dict(
         num_classes=80,
         init_cfg=dict(type='Pretrained', 
                       checkpoint='./baselines/regnety_800mf_with_dyn_perceiver/reg800m_perceiver_t128_converted.pth')),
-    neck=dict(in_channels=[64, 144, 320, 784]),
+    neck=dict(type = "DynFPN",
+              in_channels=[64, 144, 320, 784],
+              add_extra_convs='on_output'),
     bbox_head=dict(
         loss_dyn=dict(theta_factor=theta_factor,
                       lambda_factor=lambda_factor,
@@ -29,7 +31,12 @@ custom_hooks = [
          init_kwargs=dict(project='cs470', entity='plasma3365'),
          interval=10,
          log_checkpoint=True,
-         log_model=True)
+         log_model=True),
+    dict(
+        type='CustomVisualizationHook',  # Custom Visualization Hook 추가
+        interval=1,
+        save_path='data/coco/results_coco.csv'  # 결과 저장 경로
+    )
 ]
 val_cfg = dict(type='DynamicValLoop', dynamic_evaluate_epoch=dynamic_evaluate_epoch)
 test_cfg = dict(type='DynamicTestLoop', dynamic_evaluate=dynamic_evaluate_on_test)

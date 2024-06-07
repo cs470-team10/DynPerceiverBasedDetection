@@ -470,8 +470,8 @@ class DynPerceiver(nn.Module):
             for i in range(n_sample):
                 if max_preds[0][i].item() >= threshold[0]:
                     self.last_exited_stage = 1 
-                    for k in range(2, 4):
-                        outs.append(torch.zeros(*self.output_fmap_sizes[k]).cuda())
+                    # for k in range(2, 4):
+                    #     outs.append(torch.zeros(*self.output_fmap_sizes[k]).cuda())
             
                     return y_early3, torch.zeros_like(y_early3), torch.zeros_like(y_early3), torch.zeros_like(y_early3), outs 
 
@@ -531,8 +531,8 @@ class DynPerceiver(nn.Module):
             for i in range(n_sample):
                 if max_preds[0][i].item() >= threshold[1]:
                     self.last_exited_stage = 2 
-                    for k in range(3, 4):
-                        outs.append(torch.zeros(*self.output_fmap_sizes[k]).cuda())
+                    # for k in range(3, 4):
+                    #     outs.append(torch.zeros(*self.output_fmap_sizes[k]).cuda())
             
                     return y_early3, y_att, torch.zeros_like(y_att), torch.zeros_like(y_att), outs 
 

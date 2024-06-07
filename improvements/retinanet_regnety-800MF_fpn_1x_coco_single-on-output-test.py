@@ -1,27 +1,14 @@
 _base_ = '../configs/regnet/retinanet_regnetx-3.2GF_fpn_1x_coco.py'
-dynamic_evaluate_epoch = [1, 12] # Training 때 dynamic evaluation을 할 epoch. 안할거면 [], 다할거면 [i + 1 for i in range(12)]
-theta_factor = 5e-2
-lambda_factor = 1-theta_factor
-dynamic_evaluate_on_test = True
-
 custom_imports = dict(
-    imports=['mmdet.models.backbones.dyn_perceiver_regnet_zeromap'],
+    imports=['mmdet.models.backbones.regnety_800mf'],
     allow_failed_imports=False)
 model = dict(
     backbone=dict(
-        type='DynPerceiverZeromap',
-        test_num=2,
-        num_classes=80,
+        type='RegNetY800MF',
         init_cfg=dict(type='Pretrained', 
-                      checkpoint='./baselines/regnety_800mf_with_dyn_perceiver/reg800m_perceiver_t128_converted.pth')),
-    neck=dict(in_channels=[64, 144, 320, 784]),
-    bbox_head=dict(
-        loss_dyn=dict(theta_factor=theta_factor,
-                      lambda_factor=lambda_factor,
-                      with_kd=False,
-                       type='DynLoss'),
-        type='DynRetinaHead'),
-    type='DynRetinaNet'
+                      checkpoint='./baselines/regnety_800mf_wo_dyn_perceiver/regnet_y_800mf-converted.pth')),
+    neck=dict(in_channels=[64, 144, 320, 784],
+              add_extra_convs='on_output')
 )
 
 custom_hooks = [
@@ -31,8 +18,6 @@ custom_hooks = [
          log_checkpoint=True,
          log_model=True)
 ]
-val_cfg = dict(type='DynamicValLoop', dynamic_evaluate_epoch=dynamic_evaluate_epoch)
-test_cfg = dict(type='DynamicTestLoop', dynamic_evaluate=dynamic_evaluate_on_test)
 test_dataloader = dict(
     dataset=dict(
         ann_file='annotations/singlebox_instances_val2017.json',
