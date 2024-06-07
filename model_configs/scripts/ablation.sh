@@ -1,0 +1,2 @@
+nohup model_configs/ilsvrc/ablation/scripts/test_ilsvrc_ablation.sh > model_configs/ilsvrc/ablation/scripts/logs/test_ilsvrc_ablation.out 2> model_configs/ilsvrc/ablation/scripts/logs/test_ilsvrc_ablation_warn.out &
+nohup model_configs/coco/ablation/scripts/test_coco_ablation.sh > model_configs/coco/ablation/scripts/logs/test_coco_ablation.out 2> model_configs/coco/ablation/scripts/logs/test_coco_ablation_warn.out &

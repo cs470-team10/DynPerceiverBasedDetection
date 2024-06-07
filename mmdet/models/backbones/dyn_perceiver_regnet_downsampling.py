@@ -5,9 +5,9 @@ from mmengine.model import BaseModule
 from cs470_logger.cs470_debug_print import cs470_debug_print
 
 @MODELS.register_module()
-class DynPerceiverZeromap(BaseModule):
+class DynPerceiverDownSampling(BaseModule):
     def __init__(self, init_cfg, test_num, num_classes=1000, **args):
-        super(DynPerceiverZeromap, self).__init__(init_cfg)
+        super(DynPerceiverDownSampling, self).__init__(init_cfg)
         self.dyn_perceiver = DynPerceiver(
             num_latents=128,
             num_classes=num_classes,
@@ -20,7 +20,7 @@ class DynPerceiverZeromap(BaseModule):
             with_dwc=True,
             with_z2x=True,
             with_isc=True,
-            zero_padding=True)
+            zero_padding=False)
         if (init_cfg == None or init_cfg['type'] != 'Pretrained' or init_cfg['checkpoint'] == None or not isinstance(init_cfg['checkpoint'], str)):
             raise 'A pretrained model must be provided.'
         self.test_num = test_num

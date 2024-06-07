@@ -1,2 +1,0 @@
-nohup improvements/ilsvrc/candidates/train_ilsvrc_1.sh > experiment-1-sub-exp/ilsrvc/train_ilsvrc_1.out &
-nohup improvements/ilsvrc/candidates/train_ilsvrc_2.sh > experiment-1-sub-exp/ilsrvc/train_ilsvrc_2.out &
