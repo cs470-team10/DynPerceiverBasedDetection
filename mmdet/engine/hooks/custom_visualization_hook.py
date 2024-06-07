@@ -46,13 +46,15 @@ class CustomVisualizationHook(DetVisualizationHook):
         
     def after_test_iter(self, runner, batch_idx, data_batch, outputs):
         """Custom implementation of after_val_iter."""
+        early_exit_stage = int(batch_idx / 10000)
+        batch_idx = batch_idx % 10000
         super().after_val_iter(runner, batch_idx, data_batch, outputs)
         
         #print(outputs)
         
         # Write outputs to CSV
         with open(self.save_path, 'a', newline='') as csvfile:
-            fieldnames = ['image_id', 'bbox', 'label', 'score']
+            fieldnames = ['image_id', 'bbox', 'label', 'score', 'early_exit', 'batch_idx']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
             # Write header only if the file is empty
@@ -70,7 +72,9 @@ class CustomVisualizationHook(DetVisualizationHook):
                         'image_id': img_id,
                         'bbox': bbox,
                         'label': label,
-                        'score': score
+                        'score': score,
+                        'early_exit' : early_exit_stage,
+                        'batch_idx' : batch_idx
                     })
 
         # Additional custom logic can be added here

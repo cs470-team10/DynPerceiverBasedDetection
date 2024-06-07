@@ -35,7 +35,7 @@ custom_hooks = [
     dict(
         type='CustomVisualizationHook',  # Custom Visualization Hook 추가
         interval=1,
-        save_path='data/coco/results.csv'  # 결과 저장 경로
+        save_path='data/coco/results_coco.csv'  # 결과 저장 경로
     )
 ]
 val_cfg = dict(type='DynamicValLoop', dynamic_evaluate_epoch=dynamic_evaluate_epoch)
