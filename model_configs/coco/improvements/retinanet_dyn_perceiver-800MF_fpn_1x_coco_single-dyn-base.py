@@ -4,6 +4,6 @@ model = dict(
     neck=dict(type = "DynFPN",
               add_extra_convs='on_output'),
     bbox_head=dict(
-        loss_dyn=dict(with_kd=False, type='DynLoss')
+        loss_dyn=dict(type='DynLoss')
     )
 )

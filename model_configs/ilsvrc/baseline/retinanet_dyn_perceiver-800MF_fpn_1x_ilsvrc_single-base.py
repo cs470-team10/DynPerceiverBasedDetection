@@ -8,7 +8,9 @@ model = dict(
         num_classes=num_classes,
         init_cfg=dict(type='Pretrained', 
                       checkpoint='./baselines/regnety_800mf_with_dyn_perceiver/reg800m_perceiver_t128_converted.pth')),
-    neck=dict(in_channels=[64, 144, 320, 784]),
+    neck=dict(type = "DynFPN",
+              in_channels=[64, 144, 320, 784],
+              add_extra_convs='on_output'),
     bbox_head=dict(
         num_classes=num_classes,
         type='DynRetinaHead'),

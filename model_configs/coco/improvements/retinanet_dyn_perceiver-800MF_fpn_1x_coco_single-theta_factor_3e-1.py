@@ -1,4 +1,4 @@
-_base_ = '../improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-dyn-base'
+_base_ = '../improvements/retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-dyn-base.py'
 dynamic_evaluate_epoch = [12] # Training 때 dynamic evaluation을 할 epoch. 안할거면 [], 다할거면 [i + 1 for i in range(12)]
 theta_factor = 3e-1
 lambda_factor = 1-theta_factor
