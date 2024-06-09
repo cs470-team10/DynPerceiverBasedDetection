@@ -20,9 +20,11 @@ class DynamicTestLoopRandomExiting(TestLoop):
                  evaluator: Union[Evaluator, Dict, List],
                  num_images,
                  fp16: bool = False,
-                 dynamic_evaluate: bool = False):
+                 dynamic_evaluate: bool = False,
+                 threshold_distribution: List[float] = [0.85, 1, 0.5, 1]):
         super().__init__(runner, dataloader, evaluator, fp16)
         self.dynamic_evaluate = dynamic_evaluate
+        self.threshold_distribution = threshold_distribution
         self.num_images = num_images
         if self.dynamic_evaluate:
             self.get_flops()
@@ -67,7 +69,7 @@ class DynamicTestLoopRandomExiting(TestLoop):
     
     @torch.no_grad()
     def get_threshold_and_flops(self):
-        self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.fp16)
+        self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.threshold_distribution, self.fp16)
         cs470_print("Thresholds: " + str([threshold.tolist() for threshold in self.thresholds]))
         cs470_print("Flops per early exiting stages: " + str(self.flops.tolist()))
         return

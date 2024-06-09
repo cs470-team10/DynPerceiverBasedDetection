@@ -18,9 +18,12 @@ class DynamicValLoop(ValLoop):
                  dataloader: Union[DataLoader, Dict],
                  evaluator: Union[Evaluator, Dict, List],
                  fp16: bool = False,
-                 dynamic_evaluate_epoch: List[int] = []):
+                 dynamic_evaluate_epoch: List[int] = [],
+                 threshold_distribution: List[float] = [0.85, 1, 0.5, 1]
+                 ):
         super().__init__(runner, dataloader, evaluator, fp16)
         self.dynamic_evaluate_epoch = dynamic_evaluate_epoch
+        self.threshold_distribution = threshold_distribution
         if len(self.dynamic_evaluate_epoch) > 0:
             self.get_flops()
 
@@ -58,7 +61,7 @@ class DynamicValLoop(ValLoop):
     
     @torch.no_grad()
     def get_threshold_and_flops(self):
-        self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.fp16)
+        self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.threshold_distribution, self.fp16)
         cs470_print("Thresholds: " + str([threshold.tolist() for threshold in self.thresholds]))
         cs470_print("Flops per early exiting stages: " + str(self.flops.tolist()))
         return
@@ -88,9 +91,11 @@ class DynamicTestLoop(TestLoop):
                  dataloader: Union[DataLoader, Dict],
                  evaluator: Union[Evaluator, Dict, List],
                  fp16: bool = False,
-                 dynamic_evaluate: bool = False):
+                 dynamic_evaluate: bool = False,
+                 threshold_distribution: List[float] = [0.85, 1, 0.5, 1]):
         super().__init__(runner, dataloader, evaluator, fp16)
         self.dynamic_evaluate = dynamic_evaluate
+        self.threshold_distribution = threshold_distribution
         if self.dynamic_evaluate:
             self.get_flops()
 
@@ -127,7 +132,7 @@ class DynamicTestLoop(TestLoop):
     
     @torch.no_grad()
     def get_threshold_and_flops(self):
-        self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.fp16)
+        self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.threshold_distribution, self.fp16)
         cs470_print("Thresholds: " + str([threshold.tolist() for threshold in self.thresholds]))
         cs470_print("Flops per early exiting stages: " + str(self.flops.tolist()))
         return

@@ -5,7 +5,7 @@ import torch.nn as nn
 import math
 from cs470_logger.cs470_print import cs470_print
 
-def generate_distribution(each_exit = False) -> Tensor:
+def generate_distribution(threshold_distribution, each_exit = False) -> Tensor:
     probs_list = []
     if each_exit:
         for i in range(4):
@@ -18,7 +18,7 @@ def generate_distribution(each_exit = False) -> Tensor:
             p_list[i] = (i + 4) / 20
             p_list[33 - i] = 20 / (i + 4)
             
-        k = [0.85, 1, 0.5, 1]
+        k = threshold_distribution
         for i in range(33):
             probs = torch.exp(torch.log(p_list[i]) * torch.range(1, 4))
             probs /= probs.sum()
@@ -28,14 +28,14 @@ def generate_distribution(each_exit = False) -> Tensor:
             probs_list.append(probs)
     return probs_list # size : 34 * 4
 
-def get_threshold(model, val_loader, fp16: bool):
+def get_threshold(model, val_loader, threshold_distribution, fp16: bool):
     with autocast(enabled=fp16):
         #val_loader.batch_size = 128
         tester = Tester(model)
         
         val_pred, val_target = tester.calc_logit(val_loader, early_break = True)
         
-        probs_list = generate_distribution()
+        probs_list = generate_distribution(threshold_distribution)
         
         return_list = []
         for probs in probs_list:

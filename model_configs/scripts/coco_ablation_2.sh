@@ -1,0 +1,1 @@
+nohup model_configs/coco/ablation/scripts/test_coco_ablation_2.sh > model_configs/coco/ablation/scripts/logs/test_coco_ablation_2.out 2> model_configs/coco/ablation/scripts/logs/test_coco_ablation_2_warn.out &
