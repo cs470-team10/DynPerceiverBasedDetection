@@ -32,10 +32,10 @@ class DynamicTestLoopRandomExiting(TestLoop):
         self.runner.call_hook('before_test_epoch')
         self.runner.model.eval()
         if self.dynamic_evaluate:
+            self.get_threshold_and_flops()
             for iteraion_num in range(10):
                 cs470_print(f"Dynamic Evaluation {str(iteraion_num + 1)}")
                 self.evaluate_logger = DynamicEvaluationLogger(self.runner._log_dir, self.flops, f"test_info_{str(iteraion_num + 1)}.csv")
-                self.get_threshold_and_flops()
                 for index, _threshold in enumerate(self.thresholds):
                     num_exiting_images = self.num_images[index]
                     thresholds = [torch.tensor([-1,1,1,1]),torch.tensor([1,-1,1,1]),torch.tensor([1,1,-1,1]),torch.tensor([1,1,1,-1])]

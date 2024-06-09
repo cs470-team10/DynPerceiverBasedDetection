@@ -3,8 +3,8 @@ CONFIG_NAME="retinanet_dyn_perceiver-800MF_fpn_1x_ilsvrc_single-"
 CONFIG_PATH="model_configs/ilsvrc/ablation"
 WORK_DIR_PATH="ilsvrc_single/ablation"
 LOG_PATH="model_configs/ilsvrc/ablation/scripts/logs"
-IMPROVEMENT_CHECKPOINT = "work_dirs/ilsvrc_single/improvements/retinanet_dyn_perceiver-800MF_fpn_1x_ilsvrc_single-dyn-theta_115e-4-lambda_1/epoch_12.pth"
-BASE_CHECKPOINT = "work_dirs/ilsvrc_single/baseline/retinanet_dyn_perceiver-800MF_fpn_1x_ilsvrc_single-base/epoch_12.pth"
+IMPROVEMENT_CHECKPOINT="work_dirs/ilsvrc_single/improvements/retinanet_dyn_perceiver-800MF_fpn_1x_ilsvrc_single-dyn-theta_115e-4-lambda_1/epoch_12.pth"
+BASE_CHECKPOINT="work_dirs/ilsvrc_single/baseline/retinanet_dyn_perceiver-800MF_fpn_1x_ilsvrc_single-base/epoch_12.pth"
 
 test_config() {
     local file_config=$1
