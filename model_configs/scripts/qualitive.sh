@@ -1,0 +1,2 @@
+nohup model_configs/coco/ablation/scripts/test_coco_qualitive.sh > model_configs/coco/ablation/scripts/logs/test_coco_qualitive.out 2> model_configs/coco/ablation/scripts/logs/test_coco_qualitive_warn.out &
+nohup model_configs/ilsvrc/ablation/scripts/test_ilsvrc_qualitive.sh > model_configs/ilsvrc/ablation/scripts/logs/test_ilsvrc_qualitive.out 2> model_configs/ilsvrc/ablation/scripts/logs/test_ilsvrc_qualitive_warn.out &
