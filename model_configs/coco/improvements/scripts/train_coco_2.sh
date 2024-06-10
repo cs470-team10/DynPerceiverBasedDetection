@@ -1,10 +1,10 @@
 #!/bin/bash
 CONFIGS=(
-    "theta_factor_1e-1"
-    "theta_factor_1e-2"
-    "theta_factor_3e-1"
-    "theta_factor_3e-2"
-    "theta_factor_4e-1"
+    "theta_100e-4-lambda_1"
+    "theta_120e-4-lambda_1"
+    "theta_500e-4-lambda_1"
+    "theta_5000e-4-lambda_1"
+    "theta_10000e-4-lambda_1"
 )
 CONFIG_NAME="retinanet_dyn_perceiver-800MF_fpn_1x_coco_single-"
 CONFIG_PATH="model_configs/coco/improvements"
