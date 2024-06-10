@@ -9,7 +9,7 @@ class QualitiveLogger:
         self.log_dir = path.join(log_dir, "cs470_log")
         os.makedirs(self.log_dir, exist_ok=True)
         self.csv_file_dir = path.join(self.log_dir, f"threshold_{threshold_number}_qualitive.csv")
-        self.fieldnames = ['image_id', 'bbox', 'label', 'score', 'early_exit', 'batch_idx']
+        self.fieldnames = ['image_id', 'bbox_1', 'bbox_2', 'bbox_3', 'bbox_4', 'label', 'score', 'early_exit', 'batch_idx']
         self.content = []
 
     def process(self, batch_idx:int , data_batch: dict, outputs: Sequence[DetDataSample], early_exit_stage: int):
@@ -22,7 +22,10 @@ class QualitiveLogger:
             for bbox, label, score in zip(bboxes, labels, scores):
                 self.content.append({
                     'image_id': img_id,
-                    'bbox': bbox,
+                    'bbox_1': bbox[0],
+                    'bbox_2': bbox[1],
+                    'bbox_3': bbox[2],
+                    'bbox_4': bbox[3],
                     'label': label,
                     'score': score,
                     'early_exit' : early_exit_stage,

@@ -148,7 +148,7 @@ class DynamicTestLoop(TestLoop):
         with autocast(enabled=self.fp16):
             outputs = self.runner.model.test_step(data_batch)
         if self.use_qualitive_logger:
-            self.qualitive_logger.process(idx, data_batch, outputs, self.get_last_classifiy_correct())
+            self.qualitive_logger.process(idx, data_batch, outputs, self.get_last_exited_stage())
         self.evaluator.process(data_samples=outputs, data_batch=data_batch)
         self.runner.call_hook(
             'after_test_iter',
