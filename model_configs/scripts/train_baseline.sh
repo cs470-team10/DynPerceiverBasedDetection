@@ -1,0 +1,2 @@
+nohup model_configs/ilsvrc/baseline/scripts/train_ilsvrc_base.sh > model_configs/ilsvrc/baseline/scripts/logs/train_ilsvrc_base.out 2> model_configs/ilsvrc/baseline/scripts/logs/train_ilsvrc_base_warn.out &
+nohup model_configs/coco/baseline/scripts/train_coco_base.sh > model_configs/coco/baseline/scripts/logs/train_coco_base.out 2> model_configs/coco/baseline/scripts/logs/train_coco_base_warn.out &

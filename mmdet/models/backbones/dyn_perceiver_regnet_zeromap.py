@@ -19,7 +19,8 @@ class DynPerceiverZeromap(BaseModule):
             with_x2z=True,
             with_dwc=True,
             with_z2x=True,
-            with_isc=True)
+            with_isc=True,
+            zero_padding=True)
         if (init_cfg == None or init_cfg['type'] != 'Pretrained' or init_cfg['checkpoint'] == None or not isinstance(init_cfg['checkpoint'], str)):
             raise 'A pretrained model must be provided.'
         self.test_num = test_num

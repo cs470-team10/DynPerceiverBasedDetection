@@ -1,5 +1,6 @@
 from mmengine.runner import ValLoop, TestLoop
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Sequence
+from mmengine.runner.amp import autocast
 
 from torch.utils.data import DataLoader
 from mmengine.evaluator import Evaluator
@@ -10,6 +11,7 @@ from dyn_perceiver.get_threshold import get_threshold as _get_threshold
 import torch
 from cs470_logger.cs470_print import cs470_print
 from tools.cs470.dynamic_evaluation_logger import DynamicEvaluationLogger, DynamicValidationLogger
+from tools.cs470.qualitive_logger import QualitiveLogger
 
 @LOOPS.register_module()
 class DynamicValLoop(ValLoop):
@@ -18,9 +20,12 @@ class DynamicValLoop(ValLoop):
                  dataloader: Union[DataLoader, Dict],
                  evaluator: Union[Evaluator, Dict, List],
                  fp16: bool = False,
-                 dynamic_evaluate_epoch: List[int] = []):
+                 dynamic_evaluate_epoch: List[int] = [],
+                 threshold_distribution: List[float] = [0.85, 1, 0.5, 1]
+                 ):
         super().__init__(runner, dataloader, evaluator, fp16)
         self.dynamic_evaluate_epoch = dynamic_evaluate_epoch
+        self.threshold_distribution = threshold_distribution
         if len(self.dynamic_evaluate_epoch) > 0:
             self.get_flops()
 
@@ -39,6 +44,7 @@ class DynamicValLoop(ValLoop):
                 for idx, data_batch in enumerate(self.dataloader):
                     self.run_iter(idx, data_batch)
                     self.evaluate_logger.append(self.get_last_exited_stage())
+                    self.evaluate_logger.append_classifier(self.get_last_classifiy_correct())
                 self.unset_threshold()
                 metrics = self.evaluator.evaluate(len(self.dataloader.dataset))
                 self.runner.model.metrics.append(metrics)
@@ -57,7 +63,7 @@ class DynamicValLoop(ValLoop):
     
     @torch.no_grad()
     def get_threshold_and_flops(self):
-        self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.fp16)
+        self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.threshold_distribution, self.fp16)
         cs470_print("Thresholds: " + str([threshold.tolist() for threshold in self.thresholds]))
         cs470_print("Flops per early exiting stages: " + str(self.flops.tolist()))
         return
@@ -67,6 +73,9 @@ class DynamicValLoop(ValLoop):
     
     def get_last_exited_stage(self):
         return self.runner.model.backbone.get_last_exited_stage()
+    
+    def get_last_classifiy_correct(self):
+        return self.runner.model.classifiy_correct
 
     def set_threshold(self, threshold):
         self.runner.model.set_threshold(threshold)
@@ -84,9 +93,14 @@ class DynamicTestLoop(TestLoop):
                  dataloader: Union[DataLoader, Dict],
                  evaluator: Union[Evaluator, Dict, List],
                  fp16: bool = False,
-                 dynamic_evaluate: bool = False):
+                 dynamic_evaluate: bool = False,
+                 threshold_distribution: List[float] = [0.85, 1, 0.5, 1],
+                 use_qualitive_logger: bool = False):
         super().__init__(runner, dataloader, evaluator, fp16)
         self.dynamic_evaluate = dynamic_evaluate
+        self.threshold_distribution = threshold_distribution
+        self.use_qualitive_logger = use_qualitive_logger and dynamic_evaluate
+        self.qualitive_logger = None
         if self.dynamic_evaluate:
             self.get_flops()
 
@@ -98,15 +112,21 @@ class DynamicTestLoop(TestLoop):
             cs470_print("Dynamic Evaluation")
             self.evaluate_logger = DynamicEvaluationLogger(self.runner._log_dir, self.flops)
             self.get_threshold_and_flops()
-            for _index, threshold in enumerate(self.thresholds):
+            for index, threshold in enumerate(self.thresholds):
                 cs470_print("Thresholds for output: " + str(threshold.tolist()))
+                if self.use_qualitive_logger:
+                    self.qualitive_logger = QualitiveLogger(self.runner._log_dir, index + 1)
                 self.set_threshold(threshold)
                 for idx, data_batch in enumerate(self.dataloader):
                     self.run_iter(idx, data_batch)
                     self.evaluate_logger.append(self.get_last_exited_stage())
+                    self.evaluate_logger.append_classifier(self.get_last_classifiy_correct())
                 self.unset_threshold()
                 metrics = self.evaluator.evaluate(len(self.dataloader.dataset))
                 self.runner.model.metrics.append(metrics)
+                if self.use_qualitive_logger:
+                    self.qualitive_logger.save_info()
+                    self.qualitive_logger = None
                 self.evaluate_logger.save_info(metrics, threshold.tolist())
             self.runner.call_hook('after_test_epoch', metrics=metrics)
             self.runner.call_hook('after_test')
@@ -121,8 +141,24 @@ class DynamicTestLoop(TestLoop):
         return metrics
     
     @torch.no_grad()
+    def run_iter(self, idx, data_batch: Sequence[dict]) -> None:
+        self.runner.call_hook(
+            'before_test_iter', batch_idx=idx, data_batch=data_batch)
+        # predictions should be sequence of BaseDataElement
+        with autocast(enabled=self.fp16):
+            outputs = self.runner.model.test_step(data_batch)
+        if self.use_qualitive_logger:
+            self.qualitive_logger.process(idx, data_batch, outputs, self.get_last_exited_stage())
+        self.evaluator.process(data_samples=outputs, data_batch=data_batch)
+        self.runner.call_hook(
+            'after_test_iter',
+            batch_idx=idx,
+            data_batch=data_batch,
+            outputs=outputs)
+    
+    @torch.no_grad()
     def get_threshold_and_flops(self):
-        self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.fp16)
+        self.thresholds = _get_threshold(self.runner.model, self.runner.train_loop.dataloader, self.threshold_distribution, self.fp16)
         cs470_print("Thresholds: " + str([threshold.tolist() for threshold in self.thresholds]))
         cs470_print("Flops per early exiting stages: " + str(self.flops.tolist()))
         return
@@ -132,6 +168,9 @@ class DynamicTestLoop(TestLoop):
     
     def get_last_exited_stage(self):
         return self.runner.model.backbone.get_last_exited_stage()
+    
+    def get_last_classifiy_correct(self):
+        return self.runner.model.classifiy_correct
     
     def set_threshold(self, threshold):
         self.runner.model.set_threshold(threshold)

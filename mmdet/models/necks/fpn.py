@@ -169,6 +169,9 @@ class FPN(BaseModule):
             tuple: Feature maps, each is a 4D-tensor.
         """
         assert len(inputs) == len(self.in_channels)
+        # len(inputs) == 2 Exiting 1
+        # len(inputs) == 3 Exiting 2
+        # len(inputs) == 4 Exiting 3, 4 => 건드릴 필요 x
 
         # build laterals
         laterals = [
@@ -177,8 +180,8 @@ class FPN(BaseModule):
         ]
 
         # build top-down path
-        used_backbone_levels = len(laterals)
-        for i in range(used_backbone_levels - 1, 0, -1):
+        used_backbone_levels = len(laterals) # 3
+        for i in range(used_backbone_levels - 1, 0, -1): # i = 2, 1, 0
             # In some cases, fixing `scale factor` (e.g. 2) is preferred, but
             #  it cannot co-exist with `size` in `F.interpolate`.
             if 'scale_factor' in self.upsample_cfg:
@@ -194,7 +197,7 @@ class FPN(BaseModule):
         # part 1: from original levels
         outs = [
             self.fpn_convs[i](laterals[i]) for i in range(used_backbone_levels)
-        ]
+        ] # 3
         # part 2: add extra levels
         if self.num_outs > len(outs):
             # use max pool to get more levels on top of outputs
@@ -204,7 +207,7 @@ class FPN(BaseModule):
                     outs.append(F.max_pool2d(outs[-1], 1, stride=2))
             # add conv layers on top of original feature maps (RetinaNet)
             else:
-                if self.add_extra_convs == 'on_input':
+                if self.add_extra_convs == 'on_input': # RegNet
                     extra_source = inputs[self.backbone_end_level - 1]
                 elif self.add_extra_convs == 'on_lateral':
                     extra_source = laterals[-1]

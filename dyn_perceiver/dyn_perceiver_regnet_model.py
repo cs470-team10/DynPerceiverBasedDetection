@@ -35,7 +35,8 @@ class DynPerceiver(nn.Module):
                 with_z2x=True,
                 with_dwc=True,
                 with_last_CA=True,
-                with_isc=True):
+                with_isc=True,
+                zero_padding=False):
         super().__init__()
         if num_SA_heads is None:
             num_SA_heads = [1,2,4,8]
@@ -50,6 +51,7 @@ class DynPerceiver(nn.Module):
         self.spatial_reduction = spatial_reduction  # use SRA rather than MHA
         if spatial_reduction:
             self.ca_pooling = nn.AdaptiveAvgPool2d((7,7))
+        self.zero_padding = zero_padding
 
         """
         functions for initializing cross-attention and self-attention layers respectively.
@@ -469,9 +471,10 @@ class DynPerceiver(nn.Module):
 
             for i in range(n_sample):
                 if max_preds[0][i].item() >= threshold[0]:
-                    self.last_exited_stage = 1 
-                    for k in range(2, 4):
-                        outs.append(torch.zeros(*self.output_fmap_sizes[k]).cuda())
+                    self.last_exited_stage = 1
+                    if self.zero_padding:
+                        for k in range(2, 4):
+                            outs.append(torch.zeros(*self.output_fmap_sizes[k]).cuda())
             
                     return y_early3, torch.zeros_like(y_early3), torch.zeros_like(y_early3), torch.zeros_like(y_early3), outs 
 
@@ -531,8 +534,9 @@ class DynPerceiver(nn.Module):
             for i in range(n_sample):
                 if max_preds[0][i].item() >= threshold[1]:
                     self.last_exited_stage = 2 
-                    for k in range(3, 4):
-                        outs.append(torch.zeros(*self.output_fmap_sizes[k]).cuda())
+                    if self.zero_padding:
+                        for k in range(3, 4):
+                            outs.append(torch.zeros(*self.output_fmap_sizes[k]).cuda())
             
                     return y_early3, y_att, torch.zeros_like(y_att), torch.zeros_like(y_att), outs 
 

@@ -1,0 +1,2 @@
+nohup model_configs/ilsvrc/improvements/scripts/train_ilsvrc_1.sh > model_configs/ilsvrc/improvements/scripts/logs/train_ilsvrc_1.out 2> model_configs/ilsvrc/improvements/scripts/logs/train_ilsvrc_1_warn.out &
+nohup model_configs/ilsvrc/improvements/scripts/train_ilsvrc_2.sh > model_configs/ilsvrc/improvements/scripts/logs/train_ilsvrc_2.out 2> model_configs/ilsvrc/improvements/scripts/logs/train_ilsvrc_2_warn.out &
