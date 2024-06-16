@@ -1,9 +1,11 @@
-# CS470 Team 10
+# [2024 Spring] CS470 Team 10
+
+The results are on [paper](/CS470_Object_Detection_System_Based_on_Early_Exit_Dynamic_Perceiver.pdf).
 
 Forked from https://github.com/open-mmlab/mmdetection
 
 <details>
-<summary>Original mmdetection `README`</summary>
+<summary>Original mmdetection README</summary>
   <div align="center">
     <img src="resources/mmdet-logo.png" width="600"/>
     <div>&nbsp;</div>
